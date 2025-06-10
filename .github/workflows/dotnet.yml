@@ -1,0 +1,73 @@
+name: Questly CI/CD
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    strategy:
+      fail-fast: true
+      matrix:
+        configuration: [Debug, Release]
+
+    runs-on: ubuntu-latest
+    environment: Docker
+    
+    env:
+      SOLUTION_NAME: Questly.sln
+      QUESTLY_IMAGE: shadowkick/questly:latest
+      QUESTLY_ADMIN_IMAGE: shadowkick/questly-admin:latest
+
+    steps:
+      - name: 📦 Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          
+      - name: 📦 Cache NuGet
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+
+      - name: 🧰 Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+        
+      - name: 🔁 Restore dependencies
+        run: dotnet restore ${{ env.SOLUTION_NAME }}
+
+      - name: 🏗 Build solution
+        run: dotnet build ${{ env.SOLUTION_NAME }} --configuration Release --no-restore
+        
+      - name: 🛠 Build Questly image
+        run: docker build -t ${{ env.QUESTLY_IMAGE }} -f Questly/Dockerfile Questly
+            
+      - name: 🛠 Build QuestlyAdmin image
+        run: docker build -t ${{ env.QUESTLY_ADMIN_IMAGE }} -f QuestlyAdmin/Dockerfile QuestlyAdmin
+        
+      - name: 🔐 Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          
+      - name: 🚀 Push Questly image
+        run: docker push $QUESTLY_IMAGE:latest
+  
+      - name: 🚀 Push QuestlyAdmin image
+        run: docker push $QUESTLY_ADMIN_IMAGE:latest
+  
+      - name: 🧬 Deploy to server via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /root/docker-compose
+            docker-compose down --remove-orphans
+            docker-compose pull
+            docker-compose up -d --build
