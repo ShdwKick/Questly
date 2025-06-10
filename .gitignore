@@ -1,0 +1,49 @@
+# Build
+bin/
+obj/
+*.user
+*.rsuser
+*.suo
+*.cache
+*.csproj.user
+
+# Rider / VS Code
+.idea/
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# dotnet
+*.db
+*.db-shm
+*.db-wal
+
+# Logs
+*.log
+
+# EF Core migrations build artifacts
+Migrations/*.Designer.cs
+Migrations/*Snapshot.cs
+
+# User secrets
+secrets.json
+*.secrets.json
+
+# Env files
+.env
+.env.*
+
+# Launch profiles
+**/Properties/launchSettings.json
+
+# Publish output
+publish/
+
+# Dependency cache
+.nuget/
+packages/
+
+# Others
+ReSharper.*

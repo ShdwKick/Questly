@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Questly", "Questly\Questly.csproj", "{D3ABD0C2-239D-474B-8609-13F5557DC615}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Questly.Domain", "Questly.Domain\Questly.Domain.csproj", "{3A008D64-B084-4457-9677-A37DCF4B8FD2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QuestlyAdmin", "QuestlyAdmin\QuestlyAdmin.csproj", "{32D43235-A46E-4A86-83B2-BF372082C37B}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{D3ABD0C2-239D-474B-8609-13F5557DC615}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D3ABD0C2-239D-474B-8609-13F5557DC615}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D3ABD0C2-239D-474B-8609-13F5557DC615}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D3ABD0C2-239D-474B-8609-13F5557DC615}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3A008D64-B084-4457-9677-A37DCF4B8FD2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3A008D64-B084-4457-9677-A37DCF4B8FD2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3A008D64-B084-4457-9677-A37DCF4B8FD2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3A008D64-B084-4457-9677-A37DCF4B8FD2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{32D43235-A46E-4A86-83B2-BF372082C37B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{32D43235-A46E-4A86-83B2-BF372082C37B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{32D43235-A46E-4A86-83B2-BF372082C37B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{32D43235-A46E-4A86-83B2-BF372082C37B}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
