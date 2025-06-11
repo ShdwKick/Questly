@@ -1,4 +1,5 @@
-[![.NET Core Desktop](https://github.com/ShdwKick/Questly/actions/workflows/dotnet.yml/badge.svg?branch=main)](https://github.com/ShdwKick/Questly/actions/workflows/dotnet.yml)
+[![Questly CI/CD dev](https://github.com/ShdwKick/Questly/actions/workflows/deploy-dev.yml/badge.svg)](https://github.com/ShdwKick/Questly/actions/workflows/deploy-dev.yml)
+[![Questly CI/CD prod](https://github.com/ShdwKick/Questly/actions/workflows/deploy-prod.yml/badge.svg)](https://github.com/ShdwKick/Questly/actions/workflows/deploy-prod.yml)
 
 # GraphQL Server Application
 
