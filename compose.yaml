@@ -18,9 +18,6 @@
       - "5432:5432"
 
   questly:
-    build:
-      context: .
-      dockerfile: Questly/Dockerfile
     container_name: questly-app
     image: shadowkick/questly:latest
     environment:
@@ -39,9 +36,6 @@
         condition: service_healthy
 
   questly-admin:
-    build:
-      context: .
-      dockerfile: QuestlyAdmin/Dockerfile
     container_name: questly-admin-app
     image: shadowkick/questly:latest
     environment:
