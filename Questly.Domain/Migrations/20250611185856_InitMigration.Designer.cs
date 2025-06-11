@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Questly.Domain.Migrations
 {
     [DbContext(typeof(DatabaseContext))]
-    [Migration("20250610175234_InitMigration")]
+    [Migration("20250611185856_InitMigration")]
     partial class InitMigration
     {
         /// <inheritdoc />
