@@ -1,4 +1,4 @@
-name: Questly CI/CD
+name: Questly CI/CD prod
 
 on:
   workflow_dispatch:
