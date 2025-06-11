@@ -51,10 +51,10 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
           
       - name: 🚀 Push Questly image
-        run: docker push $QUESTLY_IMAGE:latest
+        run: docker push ${{ vars.QUESTLY_IMAGE }}:latest
   
       - name: 🚀 Push QuestlyAdmin image
-        run: docker push $QUESTLY_ADMIN_IMAGE:latest
+        run: docker push ${{ vars.QUESTLY_ADMIN_IMAGE }}:latest
   
       - name: 🧬 Deploy to server via SSH
         uses: appleboy/ssh-action@v1.0.3
