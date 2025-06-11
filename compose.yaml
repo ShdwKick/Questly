@@ -37,7 +37,7 @@
 
   questly-admin:
     container_name: questly-admin-app
-    image: shadowkick/questly:latest
+    image: shadowkick/questly-admin:latest
     environment:
       SERVER_KEY: ${SERVER_KEY}
       HASH_SALT: ${HASH_SALT}
