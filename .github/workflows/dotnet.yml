@@ -15,6 +15,10 @@ jobs:
     environment: env
 
     steps:
+
+      - name: 🔍 Debug environment variables
+        run: echo "QUESTLY_IMAGE=${{ env.QUESTLY_IMAGE }}"
+      
       - name: 📦 Checkout repository
         uses: actions/checkout@v4
         with:
