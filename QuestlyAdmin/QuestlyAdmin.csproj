@@ -30,4 +30,10 @@
     <ProjectReference Include="..\Questly.Domain\Questly.Domain.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Include="..\.dockerignore">
+      <Link>.dockerignore</Link>
+    </Content>
+  </ItemGroup>
+
 </Project>
