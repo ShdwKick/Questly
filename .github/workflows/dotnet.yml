@@ -15,9 +15,6 @@ jobs:
     environment: env
 
     steps:
-
-      - name: 🔍 Debug environment variables
-        run: echo "QUESTLY_IMAGE=${{ vars.QUESTLY_IMAGE }}"
       
       - name: 📦 Checkout repository
         uses: actions/checkout@v4
@@ -36,16 +33,16 @@ jobs:
           dotnet-version: 9.0.x
         
       - name: 🔁 Restore dependencies
-        run: dotnet restore ${{ env.SOLUTION_NAME }}
+        run: dotnet restore ${{ vars.SOLUTION_NAME }}
 
       - name: 🏗 Build solution
-        run: dotnet build ${{ env.SOLUTION_NAME }} --configuration Release --no-restore
+        run: dotnet build ${{ vars.SOLUTION_NAME }} --configuration Release --no-restore
         
       - name: 🛠 Build Questly image
-        run: docker build -t ${{ env.QUESTLY_IMAGE }} -f Questly/Dockerfile Questly
+        run: docker build -t ${{ vars.QUESTLY_IMAGE }} -f Questly/Dockerfile Questly
             
       - name: 🛠 Build QuestlyAdmin image
-        run: docker build -t ${{ env.QUESTLY_ADMIN_IMAGE }} -f QuestlyAdmin/Dockerfile QuestlyAdmin
+        run: docker build -t ${{ vars.QUESTLY_ADMIN_IMAGE }} -f QuestlyAdmin/Dockerfile QuestlyAdmin
         
       - name: 🔐 Login to Docker Hub
         uses: docker/login-action@v3
