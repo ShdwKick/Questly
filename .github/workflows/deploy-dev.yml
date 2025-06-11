@@ -1,0 +1,84 @@
+name: Questly CI/CD
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    strategy:
+      fail-fast: true
+      matrix:
+        configuration: [Debug]
+
+    runs-on: ubuntu-latest
+    environment: env
+
+    steps:
+      
+      - name: 📦 Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          
+      - name: 📦 Cache NuGet
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+
+      - name: 🧰 Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+        
+      - name: 🔁 Restore dependencies
+        run: dotnet restore ${{ vars.SOLUTION_NAME }}
+
+      - name: 🏗 Build solution
+        run: dotnet build ${{ vars.SOLUTION_NAME }} --configuration Release --no-restore
+        
+      - name: 🛠 Build Questly image
+        run: docker build -t ${{ vars.QUESTLY_IMAGE }} -f Questly/Dockerfile .
+            
+      - name: 🛠 Build QuestlyAdmin image
+        run: docker build -t ${{ vars.QUESTLY_ADMIN_IMAGE }} -f QuestlyAdmin/Dockerfile .
+        
+      - name: 🔐 Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          
+      - name: 🚀 Push Questly image
+        run: docker push ${{ vars.QUESTLY_IMAGE }}:latest
+  
+      - name: 🚀 Push QuestlyAdmin image
+        run: docker push ${{ vars.QUESTLY_ADMIN_IMAGE }}:latest
+  
+      - name: 🧬 Deploy to server via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /root/QuestlyCompose
+
+            cat > .env <<EOF
+              POSTGRES_USER=${{ vars.POSTGRES_USER }}
+              POSTGRES_PASSWORD=${{ vars.POSTGRES_PASSWORD }}
+              POSTGRES_DB=${{ vars.POSTGRES_DB }}
+              SERVER_KEY=${{ vars.SERVER_KEY }}
+              HASH_SALT=${{ vars.HASH_SALT }}
+              ISSUER=${{ vars.ISSUER }}
+              AUDIENCE=${{ vars.AUDIENCE }}
+              CONNECTION_STRING=${{ vars.CONNECTION_STRING }}
+              RABBITMQ_USERNAME=${{ vars.RABBITMQ_USERNAME }}
+              RABBITMQ_PASSWORD=${{ vars.RABBITMQ_PASSWORD }}
+              RABBITMQ_HOSTNAME=${{ vars.RABBITMQ_HOSTNAME }}
+            EOF
+            
+            docker compose down --remove-orphans
+            docker compose pull
+            docker compose up -d --build

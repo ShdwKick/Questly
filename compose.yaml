@@ -1,6 +1,4 @@
-﻿version: "3.9"
-
-services:
+﻿services:
   postgres:
     image: postgres:latest
     container_name: questly-postgres
@@ -21,14 +19,13 @@ services:
 
   questly:
     build:
-      image: shadowkick/questly:latest
       context: .
       dockerfile: Questly/Dockerfile
-      container_name: questly-app
+    container_name: questly-app
+    image: shadowkick/questly:latest
     environment:
       SERVER_KEY: ${SERVER_KEY}
       HASH_SALT: ${HASH_SALT}
-      BASE_URL: ${BASE_URL}
       ISSUER: ${ISSUER}
       AUDIENCE: ${AUDIENCE}
       CONNECTION_STRING: ${CONNECTION_STRING}
@@ -45,12 +42,11 @@ services:
     build:
       context: .
       dockerfile: QuestlyAdmin/Dockerfile
-      image: shadowkick/questly:latest
-      container_name: questly-admin-app
+    container_name: questly-admin-app
+    image: shadowkick/questly:latest
     environment:
       SERVER_KEY: ${SERVER_KEY}
       HASH_SALT: ${HASH_SALT}
-      BASE_URL: ${BASE_URL}
       ISSUER: ${ISSUER}
       AUDIENCE: ${AUDIENCE}
       CONNECTION_STRING: ${CONNECTION_STRING}
