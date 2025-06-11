@@ -77,7 +77,7 @@ jobs:
               RABBITMQ_USERNAME=${{ vars.RABBITMQ_USERNAME }}
               RABBITMQ_PASSWORD=${{ vars.RABBITMQ_PASSWORD }}
               RABBITMQ_HOSTNAME=${{ vars.RABBITMQ_HOSTNAME }}
-              EOF
+            EOF
             
             docker compose down --remove-orphans
             docker compose pull
