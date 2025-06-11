@@ -12,12 +12,7 @@ jobs:
         configuration: [Debug, Release]
 
     runs-on: ubuntu-latest
-    environment: Docker
-    
-    env:
-      SOLUTION_NAME: Questly.sln
-      QUESTLY_IMAGE: shadowkick/questly:latest
-      QUESTLY_ADMIN_IMAGE: shadowkick/questly-admin:latest
+    environment: env
 
     steps:
       - name: 📦 Checkout repository
@@ -67,7 +62,7 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            cd /root/docker-compose
-            docker-compose down --remove-orphans
-            docker-compose pull
-            docker-compose up -d --build
+            cd /root/QuestlyCompose
+            compose down --remove-orphans
+            compose pull
+            compose up -d --build
