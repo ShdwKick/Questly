@@ -1,4 +1,6 @@
-﻿namespace DataModels;
+﻿using DataModels.DTOs;
+
+namespace DataModels;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 
@@ -14,6 +16,7 @@ public class DatabaseContext : DbContext
     public DbSet<PlaceType> PlaceTypes { get; set; }
     public DbSet<Leaderboard> Leaderboard { get; set; }
     public DbSet<Partner> Partners { get; set; }
+    public DbSet<BlockUser> BlockUserHistory { get; set; }
         
     private readonly string _connectionString;
     
@@ -141,6 +144,17 @@ public class DatabaseContext : DbContext
             entity.HasOne(e => e.City)
                 .WithMany()
                 .HasForeignKey(e => e.CityId);
+        });
+        
+        //BlockUserHistory
+        modelBuilder.Entity<BlockUser>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.UserId).IsRequired();
+
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId);
         });
 
         base.OnModelCreating(modelBuilder);
