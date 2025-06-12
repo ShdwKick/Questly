@@ -32,7 +32,6 @@ namespace Questly
                 var connectionString = builder.Configuration["CONNECTION_STRING"];
                 options.UseNpgsql(connectionString);
             });;
-            builder.Services.AddScoped<DatabaseContext>();
 
             builder.Services.AddScoped<IUserRepository, UserRepository>();
             builder.Services.AddScoped<IAuthorizationService, AuthorizationService>();
