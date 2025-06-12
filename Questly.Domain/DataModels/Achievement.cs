@@ -10,10 +10,12 @@ public class Achievement
     public Guid Id { get; set; }
 
     [Required]
+    [MaxLength(64)]
     [Column("c_title")]
     public string Title { get; set; }
 
     [Required]
+    [MaxLength(256)]
     [Column("c_description")]
     public string Description { get; set; }
 
@@ -29,14 +31,15 @@ public class Achievement
     [ForeignKey("CityId")]
     public City City { get; set; }
 
+    [MaxLength(256)]
     [Column("c_icon_url")]
     public string IconUrl { get; set; }
 
     [Column("c_lat")]
     public float? Lat { get; set; }
 
-    [Column("c_lng")]
-    public float? Lng { get; set; }
+    [Column("c_lon")]
+    public float? Lon { get; set; }
 
     [Column("f_category")]
     public Guid? CategoryId { get; set; }

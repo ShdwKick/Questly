@@ -10,17 +10,19 @@ public class Place
     public Guid Id { get; set; }
 
     [Required]
+    [MaxLength(64)]
     [Column("c_name")]
     public string Name { get; set; }
 
+    [MaxLength(128)]
     [Column("c_description")]
     public string? Description { get; set; }
 
     [Column("c_lat")]
-    public float? Lat { get; set; }
+    public double? Lat { get; set; }
 
     [Column("c_lng")]
-    public float? Lng { get; set; }
+    public double? Lng { get; set; }
 
     [Column("f_city")]
     public Guid? CityId { get; set; }
@@ -41,14 +43,15 @@ public class Place
     public Guid? AchievementId { get; set; }
 
     [ForeignKey("AchievementId")]
-    public Achievement Achievement { get; set; }
+    public Achievement? Achievement { get; set; }
 
     [Column("f_partner_id")]
     public Guid? PartnerId { get; set; }
 
     [ForeignKey("PartnerId")]
-    public Partner Partner { get; set; }
+    public Partner? Partner { get; set; }
 
+    [MaxLength(256)]
     [Column("c_icon_url")]
-    public string IconUrl { get; set; }
+    public string? IconUrl { get; set; }
 }
