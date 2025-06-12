@@ -68,10 +68,6 @@ namespace Questly.Repositories
                 CreatedAt = DateTime.UtcNow,
             };
 
-            if (!await _cityRepository.DoesCityExist(ufc.CityId))
-                throw new Exception("City does not exist");
-            user.CityId = ufc.CityId;
-
             var newToken = await _authorizationService.GenerateNewTokenForUser(user);
 
             newToken.UserId = user.Id;
