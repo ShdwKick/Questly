@@ -11,12 +11,14 @@ namespace Questly.Repositories
     {
         private readonly DatabaseContext _databaseConnection;
         private readonly IAuthorizationService _authorizationService;
+        private readonly ILogger<UserRepository> _logger;
 
         public UserRepository(DatabaseContext databaseConnection,
-            IAuthorizationService authorizationService)
+            IAuthorizationService authorizationService, ILogger<UserRepository> logger)
         {
             _databaseConnection = databaseConnection;
             _authorizationService = authorizationService;
+            _logger = logger;
         }
 
         public async Task<User> GetUserAsync(Guid userId)
@@ -57,33 +59,37 @@ namespace Questly.Repositories
 
         public async Task<string> CreateUserAsync(UserForCreate ufc)
         {
-            var user = new User()
-            {
-                Id = Guid.NewGuid(),
-                Username = ufc.Username,
-                Email = ufc.Email,
-                PasswordHash = HashHelper.ComputeHash(ufc.Password),
-                CreatedAt = DateTime.UtcNow,
-            };
-
-            var newToken = await _authorizationService.GenerateNewTokenForUser(user);
-
-            newToken.UserId = user.Id;
-
-            _databaseConnection.Users.Add(user);
-            _databaseConnection.Authorizations.Add(newToken);
-
             try
             {
+
+                var user = new User()
+                {
+                    Id = Guid.NewGuid(),
+                    Username = ufc.Username,
+                    Email = ufc.Email,
+                    PasswordHash = HashHelper.ComputeHash(ufc.Password),
+                    CreatedAt = DateTime.UtcNow,
+                };
+
+                var newToken = await _authorizationService.GenerateNewTokenForUser(user);
+                _logger.LogInformation($"Token created at: {newToken.AuthToken}");
+                newToken.UserId = user.Id;
+
+                _databaseConnection.Users.Add(user);
+                _logger.LogInformation($"User added to database");
+                _databaseConnection.Authorizations.Add(newToken);
+                _logger.LogInformation($"Token added to database");
+
                 await _databaseConnection.SaveChangesAsync();
+                _logger.LogInformation($"Database saved");
+                
+                return newToken.AuthToken;
             }
             catch (Exception e)
             {
-                Console.WriteLine(e);
+                _logger.LogError(e, e.Message);
                 throw;
             }
-
-            return newToken.AuthToken;
         }
 
         public async Task<Authorization> TryRefreshTokenAsync(string oldToken)

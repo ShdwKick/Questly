@@ -11,16 +11,19 @@ public class UserMutations
 {
     private readonly IUserService _userService;
     private readonly IUserRepository _userRepository;
+    private readonly ILogger<UserMutations> _logger;
     
-    public UserMutations(IUserRepository userRepository, IUserService userService)
+    public UserMutations(IUserRepository userRepository, IUserService userService, ILogger<UserMutations> logger)
     {
         _userRepository = userRepository;
         _userService = userService;
+        _logger = logger;
     }
     
     [GraphQLDescription("Мутация для создания пользователя, возвращает jwt токен")]
     public async Task<string> CreateUser(UserForCreate user)
     {
+        _logger.LogInformation("Start create user");
         return await _userService.CreateUser(user);
     }
 

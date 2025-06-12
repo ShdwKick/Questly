@@ -7,10 +7,12 @@ namespace Questly.Services
     public class UserService : IUserService
     {
         private readonly IUserRepository _userRepository;
+        private readonly ILogger<UserService> _logger;
 
-        public UserService(IUserRepository userRepository)
+        public UserService(IUserRepository userRepository, ILogger<UserService> logger)
         {
             _userRepository = userRepository;
+            _logger = logger;
         }
 
         public async Task<User> GetUserByToken()
@@ -32,6 +34,7 @@ namespace Questly.Services
 
         public async Task<string> CreateUser(UserForCreate user)
         {
+            _logger.LogInformation($"Creating new user with: name - {user.Username}, email - {user.Email}");
             if (await _userRepository.DoesUserExistAsync(user.Username))
                 throw new ArgumentException("EMAIL_OR_NAME_EXIST_PROBLEM");
         
