@@ -39,6 +39,7 @@ namespace Questly.Services
                 throw new ArgumentException("EMAIL_OR_NAME_EXIST_PROBLEM");
         
 
+            _logger.LogInformation($"Checked that user doesn't exist");
             return await _userRepository.CreateUserAsync(user);
         }
 

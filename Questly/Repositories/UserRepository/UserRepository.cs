@@ -34,7 +34,17 @@ namespace Questly.Repositories
 
         public async Task<bool> DoesUserExistAsync(string name)
         {
-            return await _databaseConnection.Users.AnyAsync(q => q.Username.Equals(name));
+            try
+            {
+                _logger.LogInformation($"Check is user exist with name {name}. in database with id {_databaseConnection.Database} and user count {_databaseConnection.Users.Count()}");
+                return await _databaseConnection.Users.AnyAsync(q => q.Username.Equals(name));
+            }
+            catch (Exception e)
+            {
+                _logger.LogError($"Error occured while checking does user exist. Exception: {e}");
+                throw;
+            }
+            
         }
 
         public async Task<bool> DoesUserExistAsync(Guid userId)
