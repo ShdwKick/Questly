@@ -1,4 +1,5 @@
 ﻿using DataModels;
+using DataModels.DTOs;
 using Microsoft.EntityFrameworkCore;
 using QuestlyAdmin.DataBase;
 
@@ -13,12 +14,12 @@ namespace QuestlyAdmin.Repositories
             _databaseConnection = databaseConnection;
         }
 
-        public async Task<bool> DoesCityExist(string name)
+        public async Task<bool> DoesCityExistAsync(string name)
         {
             return await _databaseConnection.Cities.AnyAsync(q=>q.Name.Equals(name));
         }
 
-        public async Task<bool> DoesCityExist(Guid cityId)
+        public async Task<bool> DoesCityExistAsync(Guid cityId)
         {
             return await _databaseConnection.Cities.AnyAsync(q=>q.Id == cityId);
         }
@@ -35,6 +36,35 @@ namespace QuestlyAdmin.Repositories
                 throw new Exception($"City with id:{cityId} not found");
         
             return city;
+        }
+
+        public Task<bool> CreateCities(List<CityDTO> cities)
+        {
+            throw new NotImplementedException();
+        }
+        public async Task<bool> UpdateCity(City city)
+        {
+            var cty = await _databaseConnection.Cities.FindAsync(city.Id);
+
+            cty = city;
+            _databaseConnection.Cities.Update(cty);
+            
+            var affectedRows = await _databaseConnection.SaveChangesAsync();
+
+            return affectedRows > 0;
+        }
+
+        public async Task<bool> RemoveCities(List<Guid> citiesId)
+        {
+            var cities = await _databaseConnection.Cities.Where(q => citiesId.Contains(q.Id)).ToListAsync();
+            if (cities.Count == 0)
+                return false;
+            
+            _databaseConnection.Cities.RemoveRange(cities);
+            
+            var affectedRows = await _databaseConnection.SaveChangesAsync();
+
+            return affectedRows > 0;
         }
     }
 }

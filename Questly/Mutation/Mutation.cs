@@ -1,15 +1,16 @@
 ﻿using HotChocolate;
 using Questly.Repositories;
+using Questly.Services;
 
 namespace Questly.Mutations
 {
-    //TODO: разнести методы по отдельным классам наследникам
     public class Mutation
     {
-        private readonly IUserRepository _userRepository;
+        private readonly IUserService _userService;
         
-        public Mutation(IUserRepository userRepository)        {
-            _userRepository = userRepository;
+        public Mutation(IUserService userService)        
+        {
+            _userService = userService;
         }
 
 
@@ -18,7 +19,7 @@ namespace Questly.Mutations
             "если всё хорошо то отправляет новый токен, иначе ловишь ошибку в лицо")]
         public async Task<string> TryRefreshToken(string oldToken)
         {
-            var token = await _userRepository.TryRefreshTokenAsync(oldToken);
+            var token = await _userService.TryRefreshTokenAsync(oldToken);
             return token.ToString()!;
         }
     }

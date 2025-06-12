@@ -26,20 +26,7 @@ namespace QuestlyAdmin.Services
                 //await dbContext.Database.EnsureCreatedAsync(cancellationToken);
                 await dbContext.Database.MigrateAsync(cancellationToken);
                 
-                if (!dbContext.Cities.Any())
-                {
-                    dbContext.Cities.Add(new City
-                    {
-                        Id = Guid.NewGuid(),
-                        Name = "Чебоксары",
-                        Description = "Столица мира",
-                        Lat = 56.1322,
-                        Lon = 47.2519,
-                    });
-
-                    await dbContext.SaveChangesAsync(cancellationToken);
-                    _logger.LogInformation("Добавлен тестовый администратор");
-                }
+                _logger.LogInformation("База данных инициализирована успешно!");
             }
             catch (Exception ex)
             {

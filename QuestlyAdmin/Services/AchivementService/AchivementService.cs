@@ -1,4 +1,5 @@
 ﻿using DataModels;
+using DataModels.DTOs;
 using QuestlyAdmin.Repositories;
 
 namespace QuestlyAdmin.Services
@@ -36,6 +37,34 @@ namespace QuestlyAdmin.Services
                 throw new Exception($"User with id {userId} does not exist");
 
             return await _achievementRepository.GetUserAchievements(userId);
+        }
+
+        public async Task<bool> CreateAchievements(List<AchievementDTO> achievements)
+        {
+            if(achievements == null || achievements.Count == 0)
+                throw new ArgumentNullException(nameof(achievements));
+
+            return await _achievementRepository.CreateAchievements(achievements);
+        }
+
+        public async Task<bool> UpdateAchievement(Achievement achievement)
+        {
+            if(achievement == null || achievement.Id == Guid.Empty)
+                throw new ArgumentNullException(nameof(achievement));
+            
+            if(!await _achievementRepository.DoesAchievementExist(achievement.Id))
+                throw new Exception($"Achievement with id {achievement.Id} does not exist");
+            
+            return await _achievementRepository.UpdateAchievement(achievement);
+        }
+
+
+        public Task<bool> RemoveAchievement(List<Guid> achievementsId)
+        {
+            if(achievementsId == null || achievementsId.Count == 0)
+                throw new ArgumentNullException(nameof(achievementsId));
+            
+            return _achievementRepository.RemoveAchievements(achievementsId);
         }
     }
 }

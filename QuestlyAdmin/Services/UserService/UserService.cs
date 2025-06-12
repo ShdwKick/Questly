@@ -1,4 +1,5 @@
 ﻿using DataModels;
+using DataModels.DTOs;
 using QuestlyAdmin.Repositories;
 using QuestlyAdmin.Helpers;
 
@@ -30,6 +31,25 @@ namespace QuestlyAdmin.Services
                 throw new ArgumentException("INVALID_LOGIN_OR_PASSWORD_PROBLEM");
         
             return await _userRepository.LoginUser(login, password);
+        }
+
+        public async Task<bool> ChangeUserBlockStatusAsync(BlockUserDTO blockUser)
+        {
+            if (blockUser == null || blockUser.UserId == Guid.Empty)
+                throw new ArgumentNullException(nameof(blockUser));
+            
+            if(!await _userRepository.DoesUserExistAsync(blockUser.UserId))
+                throw new Exception($"User with id {blockUser.UserId} does not exist");
+            
+            return await _userRepository.ChangeUserBlockStatus(blockUser);
+        }
+        
+        public async Task<Authorization> TryRefreshTokenAsync(string oldToken)
+        {
+            if(oldToken == null || string.IsNullOrWhiteSpace(oldToken))
+                throw new ArgumentNullException(nameof(oldToken));
+        
+            return await _userRepository.TryRefreshTokenAsync(oldToken);
         }
     }
 }

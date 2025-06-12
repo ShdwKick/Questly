@@ -65,6 +65,8 @@ namespace QuestlyAdmin
                 
                 .AddMutationType<Mutation>()
                 .AddTypeExtension<UserMutations>()
+                .AddTypeExtension<AchievementMutations>()
+                .AddTypeExtension<CitiesMutations>()
                 
                 //.AddSubscriptionType<Subsription>()
                 .AddInMemorySubscriptions()
