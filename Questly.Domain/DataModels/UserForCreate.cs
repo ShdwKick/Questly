@@ -12,5 +12,4 @@ public class UserForCreate
     
     [MaxLength(64)]
     public string Password { get; set; }
-    public Guid CityId { get; set; }
 }
