@@ -17,13 +17,16 @@ public class Authorization
     [ForeignKey("UserId")] 
     public User User { get; set; }
 
+    [MaxLength(1560)]
     [Column("c_google_token")] 
     public string? GoogleToken { get; set; }
 
+    [MaxLength(640)]
     [Column("c_auth_token")] 
     public string AuthToken { get; set; }
     
     [GraphQLIgnore]
+    [MaxLength(640)]
     [Column("c_auth_token_hash")] 
     public string AuthTokenHash { get; set; }
 }

@@ -10,16 +10,20 @@ public class Partner
     public Guid Id { get; set; }
 
     [Required]
+    [MaxLength(128)]
     [Column("c_company_name")]
     public string CompanyName { get; set; }
 
     [Required]
+    [MaxLength(256)]
     [Column("c_address")]
     public string Address { get; set; }
 
+    [MaxLength(256)]
     [Column("c_owner_email")]
     public string? OwnerEmail { get; set; }
 
+    [MaxLength(11)]
     [Column("c_contact_phone")]
     public long ContactPhone { get; set; }
 
