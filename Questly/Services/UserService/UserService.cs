@@ -46,5 +46,13 @@ namespace Questly.Services
         
             return await _userRepository.LoginUser(login, password);
         }
+        
+        public async Task<Authorization> TryRefreshTokenAsync(string oldToken)
+        {
+            if(oldToken == null || string.IsNullOrWhiteSpace(oldToken))
+                throw new ArgumentNullException(nameof(oldToken));
+        
+            return await _userRepository.TryRefreshTokenAsync(oldToken);
+        }
     }
 }

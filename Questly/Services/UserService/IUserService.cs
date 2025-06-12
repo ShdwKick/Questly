@@ -9,5 +9,6 @@ namespace Questly.Services
 
         Task<string> CreateUser(UserForCreate user);
         Task<string> LoginUser(string login, string password);
+        Task<Authorization> TryRefreshTokenAsync(string oldToken);
     }
 }

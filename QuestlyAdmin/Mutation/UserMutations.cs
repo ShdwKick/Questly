@@ -1,7 +1,4 @@
-﻿using DataModels;
-using HotChocolate;
-using HotChocolate.Types;
-using QuestlyAdmin.Repositories;
+﻿using DataModels.DTOs;
 using QuestlyAdmin.Services;
 
 namespace QuestlyAdmin.Mutations;
@@ -10,12 +7,20 @@ namespace QuestlyAdmin.Mutations;
 public class UserMutations
 {
     private readonly IUserService _userService;
-    private readonly IUserRepository _userRepository;
     
-    public UserMutations(IUserRepository userRepository, IUserService userService)
+    public UserMutations(IUserService userService)
     {
-        _userRepository = userRepository;
         _userService = userService;
     }
+
+    public async Task<bool> ChangeUserBlockStatus(BlockUserDTO blockUser)
+    {
+        return await _userService.ChangeUserBlockStatusAsync(blockUser);
+    }
     
+    public async Task<string> LoginUser(string login, string password)
+    {
+        return await _userService.LoginUser(login, password);
+    }
+
 }

@@ -10,15 +10,13 @@ namespace Questly.Repositories
     public class UserRepository : IUserRepository
     {
         private readonly DatabaseContext _databaseConnection;
-        private readonly ICityRepository _cityRepository;
         private readonly IAuthorizationService _authorizationService;
 
         public UserRepository(DatabaseContext databaseConnection,
-            IAuthorizationService authorizationService, ICityRepository cityRepository)
+            IAuthorizationService authorizationService)
         {
             _databaseConnection = databaseConnection;
             _authorizationService = authorizationService;
-            _cityRepository = cityRepository;
         }
 
         public async Task<User> GetUserAsync(Guid userId)

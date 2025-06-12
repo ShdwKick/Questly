@@ -1,4 +1,5 @@
 ﻿using DataModels;
+using DataModels.DTOs;
 using QuestlyAdmin.Repositories;
 
 namespace QuestlyAdmin.Services
@@ -23,6 +24,32 @@ namespace QuestlyAdmin.Services
                 throw new ArgumentNullException(nameof(cityId));
         
             return await _cityRepository.GetCityInfo(cityId);
+        }
+
+        public Task<bool> CreateCities(List<CityDTO> cities)
+        {
+            if(cities == null || cities.Count == 0)
+                throw new ArgumentNullException(nameof(cities));
+            return _cityRepository.CreateCities(cities);
+        }
+
+        public async Task<bool> UpdateCities(City city)
+        {
+            if(city == null || city.Id == Guid.Empty)
+                throw new ArgumentNullException(nameof(city));
+            
+            if(!await _cityRepository.DoesCityExistAsync(city.Id))
+                throw new Exception($"City with id {city.Id} does not exist");
+            
+            return await _cityRepository.UpdateCity(city);
+        }
+
+        public Task<bool> RemoveCities(List<Guid> cities)
+        {
+            if(cities == null || cities.Count == 0)
+                throw new ArgumentNullException(nameof(cities));
+            
+            return _cityRepository.RemoveCities(cities);
         }
     }
 }
