@@ -19,7 +19,7 @@ public class CitiesMutations
         return _cityService.CreateCities(cities);
     }
     
-    public Task<bool> UpdateCities(City city)
+    public Task<bool> UpdateCity(City city)
     {
         return _cityService.UpdateCities(city);
     }

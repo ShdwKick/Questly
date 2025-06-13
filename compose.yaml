@@ -48,7 +48,7 @@
       RABBITMQ_USERNAME: ${RABBITMQ_USERNAME}
       RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
     ports:
-      - "5051:5051"
+      - "5051:5000"
     depends_on:
       postgres:
         condition: service_healthy

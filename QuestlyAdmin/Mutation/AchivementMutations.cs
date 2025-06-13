@@ -14,17 +14,17 @@ public class AchievementMutations
         _achievementService = achievementService;
     }
 
-    public async Task<bool> CreateAchievement(List<AchievementDTO> achievements)
+    public async Task<bool> CreateAchievements(List<AchievementDTO> achievements)
     {
         return await _achievementService.CreateAchievements(achievements);
     }
     
-    public async Task<bool> UpdateAchievement(Achievement achievements)
+    public async Task<bool> UpdateAchievement(Achievement achievement)
     {
-        return await _achievementService.UpdateAchievement(achievements);
+        return await _achievementService.UpdateAchievement(achievement);
     }
     
-    public async Task<bool> RemoveAchievement(List<Guid> achievementsId)
+    public async Task<bool> RemoveAchievements(List<Guid> achievementsId)
     {
         return await _achievementService.RemoveAchievement(achievementsId);
     }
