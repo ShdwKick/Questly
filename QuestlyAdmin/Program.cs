@@ -54,9 +54,11 @@ namespace QuestlyAdmin
                 });
             });
 
-            
-            //builder.Services.AddSingleton<IRabbitService, RabbitService>();
-            //builder.Services.AddHostedService<RabbitHostedService>();
+            builder.Services.AddScoped<UserQueries>();
+            builder.Services.AddScoped<AchievementQuery>();
+            builder.Services.AddScoped<CityQuery>();
+            builder.Services.AddScoped<UserMutations>();
+            builder.Services.AddScoped<AchievementMutations>();
 
             builder.Services.AddGraphQLServer()
                 .ModifyRequestOptions(options =>
