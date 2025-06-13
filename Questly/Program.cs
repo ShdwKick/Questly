@@ -26,7 +26,6 @@ namespace Questly
 
             builder.Services.AddHostedService<DatabaseInitializerService>();
 
-            //builder.Services.AddScoped<Subsription>();
             builder.Services.AddDbContext<DatabaseContext>(options =>
             {
                 var connectionString = builder.Configuration["CONNECTION_STRING"];
@@ -53,10 +52,11 @@ namespace Questly
                         .AllowAnyHeader();
                 });
             });
-
             
-            //builder.Services.AddSingleton<IRabbitService, RabbitService>();
-            //builder.Services.AddHostedService<RabbitHostedService>();
+            builder.Services.AddScoped<UserQueries>();
+            builder.Services.AddScoped<AchievementQuery>();
+            builder.Services.AddScoped<CityQuery>();
+            builder.Services.AddScoped<UserMutations>();
 
             builder.Services.AddGraphQLServer()
                 .ModifyRequestOptions(options =>
@@ -72,9 +72,10 @@ namespace Questly
                 .AddMutationType<Mutation>()
                 .AddTypeExtension<UserMutations>()
                 
-                //.AddSubscriptionType<Subsription>()
                 .AddInMemorySubscriptions()
                 .AddAuthorization();
+            
+            
 
             //builder.Services.AddControllers();
 
