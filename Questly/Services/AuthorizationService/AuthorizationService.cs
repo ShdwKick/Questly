@@ -12,27 +12,19 @@ namespace Questly.Services
             _authorizationRepository = authorizationRepository;
         }
 
-        public async Task<Authorization> GenerateNewTokenForUser(User user)
+        public async Task<TokenPair> RefreshTokens(string refreshToken, string userAgent, string ip)
         {
-            return await _authorizationRepository.GenerateNewTokenForUser(user);
+            if(string.IsNullOrEmpty(refreshToken) || string.IsNullOrEmpty(userAgent) || string.IsNullOrEmpty(ip))
+                throw new ArgumentNullException("Invalid refresh token or user agent or IP address");
+            
+            return await _authorizationRepository.RefreshTokens(refreshToken, userAgent, ip);
         }
 
-        public async Task<Authorization> GetUserAuth(Guid userId)
+        public Task<string> RefreshAccessToken(string refreshToken)
         {
-            if(userId == Guid.Empty)
-                throw new ArgumentNullException(nameof(userId));
-        
-            return await _authorizationRepository.GetUserAuth(userId);
-        }
-
-        public async Task<Authorization> TryRefreshTokenAsync(User user, string oldToken)
-        {
-            if(user == null)
-                throw new ArgumentNullException(nameof(user));
-            if(string.IsNullOrEmpty(oldToken))
-                throw new ArgumentNullException(nameof(oldToken));
-        
-            return await _authorizationRepository.TryRefreshTokenAsync(user, oldToken);
+            if(string.IsNullOrEmpty(refreshToken))
+                throw new ArgumentNullException("Invalid refresh token");
+            return _authorizationRepository.RefreshAccessToken(refreshToken);
         }
     }
 }

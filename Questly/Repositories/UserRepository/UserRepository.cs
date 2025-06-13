@@ -10,18 +10,15 @@ namespace Questly.Repositories
     public class UserRepository : IUserRepository
     {
         private readonly DatabaseContext _databaseConnection;
-        private readonly IAuthorizationService _authorizationService;
         private readonly ILogger<UserRepository> _logger;
 
-        public UserRepository(DatabaseContext databaseConnection,
-            IAuthorizationService authorizationService, ILogger<UserRepository> logger)
+        public UserRepository(DatabaseContext databaseConnection, ILogger<UserRepository> logger)
         {
             _databaseConnection = databaseConnection;
-            _authorizationService = authorizationService;
             _logger = logger;
         }
 
-        public async Task<User> GetUserAsync(Guid userId)
+        public async Task<User> GetUserByIdAsync(Guid userId)
         {
             var user = await _databaseConnection.Users
                 .FirstOrDefaultAsync(q => q.Id == userId);
@@ -52,70 +49,83 @@ namespace Questly.Repositories
             return await _databaseConnection.Users.AnyAsync(q => q.Id == userId);
         }
 
-        public async Task<string> LoginUser(string username, string password)
+        public async Task<TokenPair> LoginUserAsync(string username, string password, string userAgent, string ip)
         {
-            var user = _databaseConnection.Users
-                .FirstOrDefault(q => q.Username.Equals(username) && q.PasswordHash.Equals(HashHelper.ComputeHash(password)));
-        
-            if(user == null)
-                throw new Exception("Invalid username or password");
-        
-            var auth = await _databaseConnection.Authorizations.FirstOrDefaultAsync(q=>q.UserId.Equals(user.Id));
-            if(auth == null)
+            var user = await _databaseConnection.Users.FirstOrDefaultAsync(q => q.Username == username);
+            if (user == null || user.PasswordHash != HashHelper.ComputeHash(password, user.Salt))
                 throw new Exception("Invalid username or password");
 
-            return auth.AuthToken;
-        }
+            var existingSession = await _databaseConnection.RefreshSessions
+                .FirstOrDefaultAsync(s =>
+                    s.UserId == user.Id &&
+                    s.UserAgent == userAgent &&
+                    s.RevokedAt == null &&
+                    s.ExpiresAt > DateTime.UtcNow);
 
-        public async Task<string> CreateUserAsync(UserForCreate ufc)
-        {
-            try
+            if (existingSession != null)
             {
-
-                var user = new User()
-                {
-                    Id = Guid.NewGuid(),
-                    Username = ufc.Username,
-                    Email = ufc.Email,
-                    PasswordHash = HashHelper.ComputeHash(ufc.Password),
-                    CreatedAt = DateTime.UtcNow,
-                };
-
-                var newToken = await _authorizationService.GenerateNewTokenForUser(user);
-                _logger.LogInformation($"Token created at: {newToken.AuthToken}");
-                newToken.UserId = user.Id;
-
-                _databaseConnection.Users.Add(user);
-                _logger.LogInformation($"User added to database");
-                _databaseConnection.Authorizations.Add(newToken);
-                _logger.LogInformation($"Token added to database");
-
-                await _databaseConnection.SaveChangesAsync();
-                _logger.LogInformation($"Database saved");
+                var oldRefresh = existingSession.RefreshTokenHash;
                 
-                return newToken.AuthToken;
+                var jti = Guid.NewGuid().ToString();
+                var accessToken = new JwtSecurityTokenHandler().WriteToken(
+                    TokenHelper.GenerateAccessToken(user.Id.ToString(), jti));
+
+                return new TokenPair(accessToken, null);
             }
-            catch (Exception e)
+
+            var jtiNew = Guid.NewGuid().ToString();
+            var tokens = TokenHelper.GenerateTokens(user, jtiNew);
+
+            var session = new RefreshSession
             {
-                _logger.LogError(e, e.Message);
-                throw;
-            }
+                Id = Guid.NewGuid(),
+                UserId = user.Id,
+                RefreshTokenHash = HashHelper.ComputeHash(tokens.RefreshToken),
+                UserAgent = userAgent,
+                IpAddress = ip,
+                CreatedAt = DateTime.UtcNow,
+                ExpiresAt = DateTime.UtcNow.AddDays(30)
+            };
+
+            _databaseConnection.RefreshSessions.Add(session);
+            await _databaseConnection.SaveChangesAsync();
+
+            return tokens;
         }
 
-        public async Task<Authorization> TryRefreshTokenAsync(string oldToken)
+
+        public async Task<TokenPair> CreateUserAsync(UserForCreate ufc, string userAgent, string ip)
         {
-            var jwtToken = new JwtSecurityTokenHandler().ReadToken(oldToken) as JwtSecurityToken;
-            if (jwtToken == null) throw new ArgumentException("INVALID_TOKEN_PROBLEM");
+            var user = new User()
+            {
+                Id = Guid.NewGuid(),
+                Username = ufc.Username,
+                Email = ufc.Email,
+                CreatedAt = DateTime.UtcNow,
+                Salt = HashHelper.GenerateSalt()
+            };
+            user.PasswordHash = HashHelper.ComputeHash(ufc.Password + user.Salt);
 
-            var claim = jwtToken.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Sub);
-            if (claim == null) throw new ArgumentException("INVALID_TOKEN_CLAIMS_PROBLEM");
+            var jti = Guid.NewGuid().ToString();
+            var tokens = TokenHelper.GenerateTokens(user, jti);
 
-            var user = await GetUserAsync(Guid.Parse(claim.Value));
-            if (user == null) 
-                throw new ArgumentException("TOKEN_GENERATION_USER_NOT_FOUND_PROBLEM");
-        
-            return await _authorizationService.TryRefreshTokenAsync(user, oldToken);
+            var session = new RefreshSession
+            {
+                Id = Guid.NewGuid(),
+                UserId = user.Id,
+                RefreshTokenHash = HashHelper.ComputeHash(tokens.RefreshToken),
+                UserAgent = userAgent,
+                IpAddress = ip,
+                CreatedAt = DateTime.UtcNow,
+                ExpiresAt = DateTime.UtcNow.AddDays(30)
+            };
+            _databaseConnection.Users.Add(user);
+            _databaseConnection.RefreshSessions.Add(session);
+            await _databaseConnection.SaveChangesAsync();
+
+            return tokens;
         }
+        
 
         public async Task DropAllUsers()
         {

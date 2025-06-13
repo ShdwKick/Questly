@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using HotChocolate;
 
 namespace DataModels;
 
@@ -40,4 +41,8 @@ public class User
     
     [Column("b_admin")]
     public bool IsAdmin { get; set; }
+    
+    [GraphQLIgnore]
+    [Column("c_salt")]
+    public string Salt { get; set; }
 }

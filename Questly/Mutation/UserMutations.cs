@@ -21,22 +21,31 @@ public class UserMutations
     }
     
     [GraphQLDescription("Мутация для создания пользователя, возвращает jwt токен")]
-    public async Task<string> CreateUser(UserForCreate user)
+    public async Task<TokenPair> CreateUser(UserForCreate user, [Service] IHttpContextAccessor httpContextAccessor)
     {
+        var httpContext = httpContextAccessor.HttpContext;
+        var userAgent = httpContext?.Request.Headers["User-Agent"].ToString() ?? "Unknown";
+        var ip = httpContext?.Connection?.RemoteIpAddress?.ToString() ?? "Unknown";
+        
         _logger.LogInformation("Start create user");
-        return await _userService.CreateUser(user);
+        return await _userService.CreateUserAsync(user, userAgent, ip);
     }
 
     [GraphQLDescription("Мутация для авторизации пользователя, возвращает новый jwt токен")]
-    public async Task<string> LoginUser(string login, string password)
+    public async Task<TokenPair> LoginUser(string login, string password, [Service] IHttpContextAccessor httpContextAccessor)
     {
-        return await _userService.LoginUser(login, password);
+        var httpContext = httpContextAccessor.HttpContext;
+        var userAgent = httpContext?.Request.Headers["User-Agent"].ToString() ?? "Unknown";
+        var ip = httpContext?.Connection?.RemoteIpAddress?.ToString() ?? "Unknown";
+        
+        return await _userService.LoginUser(login, password, userAgent, ip);
     }
         
     //TODO: убрать после тестирования регистрации на клиенте
     [GraphQLDescription("Временная мутация для дропа бд пользователей :)")]
-    public async Task DeleteAllUsers()
+    public async Task<bool> DeleteAllUsers()
     {
         await _userRepository.DropAllUsers();
+        return true;
     }
 }

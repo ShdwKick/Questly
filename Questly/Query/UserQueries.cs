@@ -20,14 +20,21 @@ namespace Questly.Queries
         [GraphQLDescription("AUTHORIZE-Получить данные о пользователе по его токену авторизации")]
         public async Task<User> GetUserByToken()
         {
-            return await _userService?.GetUserByToken();
+            return await _userService.GetUserByToken();
         }
 
         [Authorize]
         [GraphQLDescription("AUTHORIZE-Получить данные о пользователе по его id")]
         public async Task<User> GetUserById(Guid userId)
         {
-            return await _userService?.GetUserById(userId);
+            return await _userService.GetUserByIdAsync(userId);
         }
+        
+        [Authorize]
+        public async Task<bool> Logout(string token)
+        {
+            return await _userService.Logout(token);
+        }
+
     }
 }

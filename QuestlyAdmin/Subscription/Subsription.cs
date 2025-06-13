@@ -2,7 +2,6 @@
 using HotChocolate.Execution;
 using HotChocolate.Subscriptions;
 using HotChocolate.Types;
-using QuestlyAdmin.DataBase;
 
 namespace Questly
 {

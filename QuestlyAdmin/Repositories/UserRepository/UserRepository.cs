@@ -2,7 +2,6 @@
 using DataModels;
 using DataModels.DTOs;
 using Microsoft.EntityFrameworkCore;
-using QuestlyAdmin.DataBase;
 using QuestlyAdmin.Helpers;
 using QuestlyAdmin.Services;
 
@@ -11,16 +10,18 @@ namespace QuestlyAdmin.Repositories
     public class UserRepository : IUserRepository
     {
         private readonly DatabaseContext _databaseConnection;
-        private readonly IAuthorizationService _authorizationService;
+        private readonly IAuthorizationRepository _authorizationRepository;
+        private readonly ILogger<UserRepository> _logger;
 
         public UserRepository(DatabaseContext databaseConnection,
-            IAuthorizationService authorizationService)
+            IAuthorizationRepository authorizationRepository, ILogger<UserRepository> logger)
         {
             _databaseConnection = databaseConnection;
-            _authorizationService = authorizationService;
+            _authorizationRepository = authorizationRepository;
+            _logger = logger;
         }
 
-        public async Task<User> GetUserAsync(Guid userId)
+        public async Task<User> GetUserByIdAsync(Guid userId)
         {
             var user = await _databaseConnection.Users
                 .FirstOrDefaultAsync(q => q.Id == userId);
@@ -33,7 +34,17 @@ namespace QuestlyAdmin.Repositories
 
         public async Task<bool> DoesUserExistAsync(string name)
         {
-            return await _databaseConnection.Users.AnyAsync(q => q.Username.Equals(name));
+            try
+            {
+                _logger.LogInformation($"Check is user exist with name {name}. in database with id {_databaseConnection.Database} and user count {_databaseConnection.Users.Count()}");
+                return await _databaseConnection.Users.AnyAsync(q => q.Username.Equals(name));
+            }
+            catch (Exception e)
+            {
+                _logger.LogError($"Error occured while checking does user exist. Exception: {e}");
+                throw;
+            }
+            
         }
 
         public async Task<bool> DoesUserExistAsync(Guid userId)
@@ -41,63 +52,107 @@ namespace QuestlyAdmin.Repositories
             return await _databaseConnection.Users.AnyAsync(q => q.Id == userId);
         }
 
-        public async Task<string> LoginUser(string username, string password)
+        public async Task<TokenPair> LoginUserAsync(string username, string password, string userAgent, string ip)
         {
-            var user = _databaseConnection.Users
-                .FirstOrDefault(q => q.Username.Equals(username) && q.PasswordHash.Equals(HashHelper.ComputeHash(password)));
-
-            if(user == null)
-                throw new Exception("Invalid username or password");
-            
-            if (!user.IsAdmin)
-                throw new UnauthorizedAccessException("You are not an admin :(");
-        
-            var auth = await _databaseConnection.Authorizations.FirstOrDefaultAsync(q=>q.UserId.Equals(user.Id));
-            if(auth == null)
+            var user = await _databaseConnection.Users.FirstOrDefaultAsync(q => q.Username == username);
+            if (user == null || user.PasswordHash != HashHelper.ComputeHash(password, user.Salt))
                 throw new Exception("Invalid username or password");
 
-            return auth.AuthToken;
+            var existingSession = await _databaseConnection.RefreshSessions
+                .FirstOrDefaultAsync(s =>
+                    s.UserId == user.Id &&
+                    s.UserAgent == userAgent &&
+                    s.RevokedAt == null &&
+                    s.ExpiresAt > DateTime.UtcNow);
+
+            if (existingSession != null)
+            {
+                var oldRefresh = existingSession.RefreshTokenHash;
+                
+                var jti = Guid.NewGuid().ToString();
+                var accessToken = new JwtSecurityTokenHandler().WriteToken(
+                    TokenHelper.GenerateAccessToken(user.Id.ToString(), jti));
+
+                return new TokenPair(accessToken, null);
+            }
+
+            var jtiNew = Guid.NewGuid().ToString();
+            var tokens = TokenHelper.GenerateTokens(user, jtiNew);
+
+            var session = new RefreshSession
+            {
+                Id = Guid.NewGuid(),
+                UserId = user.Id,
+                RefreshTokenHash = HashHelper.ComputeHash(tokens.RefreshToken),
+                UserAgent = userAgent,
+                IpAddress = ip,
+                CreatedAt = DateTime.UtcNow,
+                ExpiresAt = DateTime.UtcNow.AddDays(30)
+            };
+
+            _databaseConnection.RefreshSessions.Add(session);
+            await _databaseConnection.SaveChangesAsync();
+
+            return tokens;
         }
 
-        public async Task<bool> ChangeUserBlockStatus(BlockUserDTO blockUser)
+        public async Task<TokenPair> CreateUserAsync(UserForCreate ufc, string userAgent, string ip)
         {
-            var user = await _databaseConnection.Users.FindAsync(blockUser.UserId);
+            var user = new User()
+            {
+                Id = Guid.NewGuid(),
+                Username = ufc.Username,
+                Email = ufc.Email,
+                CreatedAt = DateTime.UtcNow,
+                Salt = HashHelper.GenerateSalt()
+            };
+            user.PasswordHash = HashHelper.ComputeHash(ufc.Password + user.Salt);
+
+            var jti = Guid.NewGuid().ToString();
+            var tokens = TokenHelper.GenerateTokens(user, jti);
+
+            var session = new RefreshSession
+            {
+                Id = Guid.NewGuid(),
+                UserId = user.Id,
+                RefreshTokenHash = HashHelper.ComputeHash(tokens.RefreshToken),
+                UserAgent = userAgent,
+                IpAddress = ip,
+                CreatedAt = DateTime.UtcNow,
+                ExpiresAt = DateTime.UtcNow.AddDays(30)
+            };
+            _databaseConnection.Users.Add(user);
+            _databaseConnection.RefreshSessions.Add(session);
+            await _databaseConnection.SaveChangesAsync();
+
+            return tokens;
+        }
+
+        public async Task<bool> ChangeUserBlockStatusAsync(BlockUserDTO dto)
+        {
+            var user = await GetUserByIdAsync(dto.UserId);
+            if(user == null)
+                throw new Exception($"User with id {dto.UserId} not found");
+
+            if (user.IsBlocked == dto.BlockStatus)
+                throw new Exception($"User with id {dto.UserId} already has same status");
             
-            if(user!.IsBlocked == blockUser.BlockStatus)
-                throw new Exception($"User with id {blockUser.UserId} already has same status");
-            
+            user.IsBlocked = dto.BlockStatus;
+            user.BlockReason = dto.Reason;
+
             _databaseConnection.BlockUserHistory.Add(new BlockUser
             {
                 Id = Guid.NewGuid(),
-                UserId = blockUser.UserId,
-                Reason = blockUser.Reason,
-                BlockStatus = blockUser.BlockStatus,
+                UserId = dto.UserId,
+                BlockStatus = dto.BlockStatus,
+                Reason = dto.Reason,
                 ModifDateTime = DateTime.UtcNow
             });
-            var affectedRows = await _databaseConnection.SaveChangesAsync();
-
+            
+            int affectedRows = await _databaseConnection.SaveChangesAsync();
             return affectedRows > 0;
         }
-        
-        public async Task<Authorization> TryRefreshTokenAsync(string oldToken)
-        {
-            var jwtToken = new JwtSecurityTokenHandler().ReadToken(oldToken) as JwtSecurityToken;
-            if (jwtToken == null) 
-                throw new ArgumentNullException("Invalid old token");
 
-            var claim = jwtToken.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Sub);
-            if (claim == null) 
-                throw new ArgumentNullException("Invalid token claims");
-
-            var user = await GetUserAsync(Guid.Parse(claim.Value));
-            if (user == null) 
-                throw new ArgumentNullException("User with this token doesn`t exist");
-        
-            return await _authorizationService.TryRefreshTokenAsync(user, oldToken);
-        }
-
-
-        //TODO: убрать
         public async Task DropAllUsers()
         {
             await _databaseConnection.Users.ExecuteDeleteAsync();

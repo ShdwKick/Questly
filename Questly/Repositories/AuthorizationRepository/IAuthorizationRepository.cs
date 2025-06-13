@@ -4,10 +4,8 @@ namespace Questly.Repositories
 {
     public interface IAuthorizationRepository
     {
-        Task<Authorization> GetUserAuth(Guid userId);
-        Task<Authorization> TryRefreshTokenAsync(User user, string oldToken);
-    
-        Task<Authorization> GenerateNewTokenForUser(User user, bool needRefreshId = false);
-        Task<Authorization> GenerateNewTokenForUser(User user, Authorization? auth, bool needRefreshId = false);
+        Task<TokenPair> RefreshTokens(string refreshToken, string userAgent, string ip);
+        Task<string> RefreshAccessToken(string refreshToken);
+        Task<bool> Logout(string refreshToken);
     }
 }

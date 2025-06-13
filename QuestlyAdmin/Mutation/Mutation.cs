@@ -20,7 +20,7 @@ namespace QuestlyAdmin.Mutations
             "если всё хорошо то отправляет новый токен, иначе ловишь ошибку в лицо")]
         public async Task<string> TryRefreshToken(string oldToken)
         {
-            var token = await _userService.TryRefreshTokenAsync(oldToken);
+            var token = await _userService.TryRefreshAccessTokenAsync(oldToken);
             return token.ToString()!;
         }
     }

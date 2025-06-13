@@ -1,7 +1,6 @@
 ﻿using DataModels;
 using DataModels.DTOs;
 using Microsoft.EntityFrameworkCore;
-using QuestlyAdmin.DataBase;
 
 namespace QuestlyAdmin.Repositories
 {
