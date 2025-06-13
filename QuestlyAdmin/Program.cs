@@ -1,4 +1,6 @@
-﻿using System.Text;
+﻿using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 using DataModels;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -26,19 +28,18 @@ namespace QuestlyAdmin
 
             builder.Services.AddHostedService<DatabaseInitializerService>();
 
-            //builder.Services.AddScoped<Subsription>();
             builder.Services.AddDbContext<DatabaseContext>(options =>
             {
                 var connectionString = builder.Configuration["CONNECTION_STRING"];
                 options.UseNpgsql(connectionString);
-            });
+            });;
 
-            builder.Services.AddScoped<IUserRepository, UserRepository>();
+            builder.Services.AddScoped<IUserService, UserService>();
             builder.Services.AddScoped<IAuthorizationService, AuthorizationService>();
             builder.Services.AddScoped<IAchievementService, AchievementService>();
             builder.Services.AddScoped<ICityService, CityService>();
             
-            builder.Services.AddScoped<IUserService, UserService>();
+            builder.Services.AddScoped<IUserRepository, UserRepository>();
             builder.Services.AddScoped<ICityRepository, CityRepository>();
             builder.Services.AddScoped<IAchievementRepository, AchievementRepository>();
             builder.Services.AddScoped<IAuthorizationRepository, AuthorizationRepository>();
@@ -53,12 +54,13 @@ namespace QuestlyAdmin
                         .AllowAnyHeader();
                 });
             });
-
+            
+            builder.Services.AddScoped<Mutation>();
+            builder.Services.AddScoped<Query>();
             builder.Services.AddScoped<UserQueries>();
             builder.Services.AddScoped<AchievementQuery>();
             builder.Services.AddScoped<CityQuery>();
             builder.Services.AddScoped<UserMutations>();
-            builder.Services.AddScoped<AchievementMutations>();
 
             builder.Services.AddGraphQLServer()
                 .ModifyRequestOptions(options =>
@@ -73,12 +75,11 @@ namespace QuestlyAdmin
                 
                 .AddMutationType<Mutation>()
                 .AddTypeExtension<UserMutations>()
-                .AddTypeExtension<AchievementMutations>()
-                .AddTypeExtension<CitiesMutations>()
                 
-                //.AddSubscriptionType<Subsription>()
                 .AddInMemorySubscriptions()
                 .AddAuthorization();
+            
+            
 
             //builder.Services.AddControllers();
 
@@ -92,7 +93,7 @@ namespace QuestlyAdmin
                     options.TokenValidationParameters = new TokenValidationParameters
                     {
                         ValidateIssuerSigningKey = true,
-                        IssuerSigningKey = securityKey,
+                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(ConfigurationHelper.GetServerKey())),
                         ValidateIssuer = true,
                         ValidIssuer = ConfigurationHelper.GetIssuer(),
                         ValidateAudience = true,
@@ -102,7 +103,7 @@ namespace QuestlyAdmin
                     };
                     options.Events = new JwtBearerEvents
                     {
-                        OnAuthenticationFailed = _ => Task.FromResult("AUTH_FAILED_PROBLEM")
+                        OnAuthenticationFailed = _ => Task.FromResult("AUTH_FAILED_PROBLEM"),
                     };
                 });
             builder.WebHost.UseUrls("http://0.0.0.0:5000");
@@ -119,7 +120,6 @@ namespace QuestlyAdmin
             //app.MapControllers();
             
             app.UseCors("AllowAll");
-
 
             //set response max size limits 
             app.Use(async (context, next) =>

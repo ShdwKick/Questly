@@ -72,7 +72,6 @@ namespace QuestlyAdmin.Services
         {
             if (dto == null || dto.UserId == null || dto.UserId == Guid.Empty)
                 throw new ArgumentNullException("Invalid user data");
-
             return await _userRepository.ChangeUserBlockStatusAsync(dto);
         }
     }

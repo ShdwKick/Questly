@@ -55,6 +55,8 @@ namespace Questly
                 });
             });
             
+            builder.Services.AddScoped<Mutation>();
+            builder.Services.AddScoped<Query>();
             builder.Services.AddScoped<UserQueries>();
             builder.Services.AddScoped<AchievementQuery>();
             builder.Services.AddScoped<CityQuery>();

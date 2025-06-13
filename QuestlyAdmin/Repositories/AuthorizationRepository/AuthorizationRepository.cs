@@ -9,16 +9,21 @@ namespace QuestlyAdmin.Repositories
     {
         private readonly DatabaseContext _databaseConnection;
         private readonly IUserRepository _userRepository;
+        private readonly ILogger<AuthorizationRepository> _logger;
 
-        public AuthorizationRepository(DatabaseContext databaseConnection, IUserRepository userRepository)
+        public AuthorizationRepository(DatabaseContext databaseConnection, IUserRepository userRepository,
+            ILogger<AuthorizationRepository> logger)
         {
             _databaseConnection = databaseConnection;
             _userRepository = userRepository;
+            _logger = logger;
         }
-        
+
         public async Task<string> RefreshAccessToken(string refreshToken)
         {
             var hashed = HashHelper.ComputeHash(refreshToken);
+            _logger.LogInformation($"Hash code: {this.GetHashCode()}");
+            _logger.LogInformation($"_databaseConnection Hash code: {_databaseConnection.GetHashCode()}");
 
             var session = await _databaseConnection.RefreshSessions
                 .FirstOrDefaultAsync(s =>
@@ -46,7 +51,8 @@ namespace QuestlyAdmin.Repositories
             var hashed = HashHelper.ComputeHash(refreshToken);
 
             var session = await _databaseConnection.RefreshSessions
-                .FirstOrDefaultAsync(s => s.RefreshTokenHash == hashed && s.RevokedAt == null && s.ExpiresAt > DateTime.UtcNow);
+                .FirstOrDefaultAsync(s =>
+                    s.RefreshTokenHash == hashed && s.RevokedAt == null && s.ExpiresAt > DateTime.UtcNow);
 
             if (session == null)
                 throw new Exception("Invalid refresh token");
@@ -77,7 +83,7 @@ namespace QuestlyAdmin.Repositories
 
             return tokens;
         }
-        
+
         public async Task<bool> Logout(string refreshToken)
         {
             var hashed = HashHelper.ComputeHash(refreshToken);

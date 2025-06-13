@@ -3,7 +3,7 @@ using HotChocolate.Execution;
 using HotChocolate.Subscriptions;
 using HotChocolate.Types;
 
-namespace Questly
+namespace QuestlyAdmin
 {
     public class Subsription
     {
