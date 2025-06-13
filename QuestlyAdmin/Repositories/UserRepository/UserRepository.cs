@@ -10,14 +10,11 @@ namespace QuestlyAdmin.Repositories
     public class UserRepository : IUserRepository
     {
         private readonly DatabaseContext _databaseConnection;
-        private readonly IAuthorizationRepository _authorizationRepository;
         private readonly ILogger<UserRepository> _logger;
 
-        public UserRepository(DatabaseContext databaseConnection,
-            IAuthorizationRepository authorizationRepository, ILogger<UserRepository> logger)
+        public UserRepository(DatabaseContext databaseConnection, ILogger<UserRepository> logger)
         {
             _databaseConnection = databaseConnection;
-            _authorizationRepository = authorizationRepository;
             _logger = logger;
         }
 

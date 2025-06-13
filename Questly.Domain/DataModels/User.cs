@@ -23,6 +23,7 @@ public class User
     [Required]
     [MaxLength(256)]
     [Column("c_password_hash")]
+    [GraphQLIgnore]
     public string PasswordHash { get; set; }
 
     [Column("c_created_at")]
