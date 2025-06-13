@@ -26,7 +26,11 @@ namespace QuestlyAdmin.Services
         public async Task<List<UserAchievement>> GetUserCompletedAchievements(Guid userId)
         {
             if(!await _userRepository.DoesUserExistAsync(userId))
-                throw new Exception($"User with id {userId} does not exist");
+                throw new GraphQLException(
+                    ErrorBuilder.New()
+                        .SetMessage($"User with id {userId} not found")
+                        .SetCode("USER_NOT_FOUND")
+                        .Build());
 
             return await _achievementRepository.GetUserCompletedAchievements(userId);
         }
@@ -34,7 +38,11 @@ namespace QuestlyAdmin.Services
         public async Task<List<UserAchievement>> GetUserAchievements(Guid userId)
         {
             if(!await _userRepository.DoesUserExistAsync(userId))
-                throw new Exception($"User with id {userId} does not exist");
+                throw new GraphQLException(
+                    ErrorBuilder.New()
+                        .SetMessage($"User with id {userId} not found")
+                        .SetCode("USER_NOT_FOUND")
+                        .Build());
 
             return await _achievementRepository.GetUserAchievements(userId);
         }
@@ -53,7 +61,11 @@ namespace QuestlyAdmin.Services
                 throw new ArgumentNullException(nameof(achievement));
             
             if(!await _achievementRepository.DoesAchievementExist(achievement.Id))
-                throw new Exception($"Achievement with id {achievement.Id} does not exist");
+                throw new GraphQLException(
+                    ErrorBuilder.New()
+                        .SetMessage($"Achievement with id {achievement.Id} does not exist")
+                        .SetCode("ACHIEVEMENT_NOT_FOUND")
+                        .Build());
             
             return await _achievementRepository.UpdateAchievement(achievement);
         }

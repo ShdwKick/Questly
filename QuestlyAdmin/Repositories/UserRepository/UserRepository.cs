@@ -24,7 +24,11 @@ namespace QuestlyAdmin.Repositories
                 .FirstOrDefaultAsync(q => q.Id == userId);
 
             if (user == null)
-                throw new Exception($"User with id {userId} not found");
+                throw new GraphQLException(
+                    ErrorBuilder.New()
+                        .SetMessage($"User with id {userId} not found")
+                        .SetCode("USER_NOT_FOUND")
+                        .Build());
 
             return user;
         }
@@ -138,10 +142,18 @@ namespace QuestlyAdmin.Repositories
         {
             var user = await GetUserByIdAsync(dto.UserId);
             if(user == null)
-                throw new Exception($"User with id {dto.UserId} not found");
+                throw new GraphQLException(
+                    ErrorBuilder.New()
+                        .SetMessage($"User with id {dto.UserId} not found")
+                        .SetCode("USER_NOT_FOUND")
+                        .Build());
 
             if (user.IsBlocked == dto.BlockStatus)
-                throw new Exception($"User with id {dto.UserId} already has same status");
+                throw new GraphQLException(
+                    ErrorBuilder.New()
+                        .SetMessage($"User with id {dto.UserId} already has {dto.BlockStatus} block status")
+                        .SetCode("USER_BLOCK_STATUS_ALREADY_SAME")
+                        .Build());
             
             user.IsBlocked = dto.BlockStatus;
             user.BlockReason = dto.Reason;

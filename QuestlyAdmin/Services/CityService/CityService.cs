@@ -39,7 +39,11 @@ namespace QuestlyAdmin.Services
                 throw new ArgumentNullException(nameof(city));
             
             if(!await _cityRepository.DoesCityExistAsync(city.Id))
-                throw new Exception($"City with id {city.Id} does not exist");
+                throw new GraphQLException(
+                    ErrorBuilder.New()
+                        .SetMessage($"City with id {city.Id} does not exist")
+                        .SetCode("CITY_NOT_FOUND")
+                        .Build());
             
             return await _cityRepository.UpdateCity(city);
         }

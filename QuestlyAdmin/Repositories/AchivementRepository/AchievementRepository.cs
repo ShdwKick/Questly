@@ -17,7 +17,11 @@ namespace QuestlyAdmin.Repositories
         {
             var achievement = await _databaseConnection.Achievements.FirstOrDefaultAsync(q => q.Id == achId);
             if (achievement == null)
-                throw new Exception($"Achievement with id {achId} not found");
+                throw new GraphQLException(
+                    ErrorBuilder.New()
+                        .SetMessage($"Achievement with id {achId} not found")
+                            .SetCode("ACHIEVEMENT_NOT_FOUND")
+                        .Build());
 
             return achievement;
         }

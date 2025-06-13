@@ -32,11 +32,19 @@ namespace QuestlyAdmin.Repositories
                     s.ExpiresAt > DateTime.UtcNow);
 
             if (session == null)
-                throw new Exception("Invalid or expired refresh token");
+                throw new GraphQLException(
+                    ErrorBuilder.New()
+                        .SetMessage("Invalid or expired refresh token")
+                        .SetCode("INVALID_REFRESH_TOKEN")
+                        .Build());
 
             var user = await _userRepository.GetUserByIdAsync(session.UserId);
             if (user == null)
-                throw new Exception("User not found");
+                throw new GraphQLException(
+                    ErrorBuilder.New()
+                        .SetMessage($"User with id {session.UserId} was not found")
+                        .SetCode("USER_NOT_FOUND")
+                        .Build());
 
             var jti = Guid.NewGuid().ToString();
             var accessToken = new JwtSecurityTokenHandler().WriteToken(
@@ -55,11 +63,19 @@ namespace QuestlyAdmin.Repositories
                     s.RefreshTokenHash == hashed && s.RevokedAt == null && s.ExpiresAt > DateTime.UtcNow);
 
             if (session == null)
-                throw new Exception("Invalid refresh token");
+                throw new GraphQLException(
+                    ErrorBuilder.New()
+                        .SetMessage("Invalid or expired refresh token")
+                        .SetCode("INVALID_REFRESH_TOKEN")
+                        .Build());
 
             var user = await _userRepository.GetUserByIdAsync(session.UserId);
             if (user == null)
-                throw new Exception("User not found");
+                throw new GraphQLException(
+                    ErrorBuilder.New()
+                        .SetMessage($"User with id {session.UserId} was not found")
+                        .SetCode("USER_NOT_FOUND")
+                        .Build());
 
             // Revoke old session (optional, if using rotation)
             session.RevokedAt = DateTime.UtcNow;
