@@ -15,6 +15,13 @@ namespace QuestlyAdmin.Queries
         {
             _userService = userService;
         }
+        
+        [Authorize]
+        [GraphQLDescription("AUTHORIZE-Получить данные о пользователе по его токену авторизации")]
+        public async Task<User> GetUserByToken()
+        {
+            return await _userService.GetUserByToken();
+        }
     
         [Authorize]
         [GraphQLDescription("AUTHORIZE-Получить данные о пользователе по его id")]

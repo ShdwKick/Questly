@@ -19,7 +19,8 @@ namespace Questly.Services
 
         public async Task<User> GetUserByToken()
         {
-            return await UserHelper.GetUserFromHeader();
+            var userId = UserHelper.GetUserIdFromHeader();
+            return await _userRepository.GetUserByIdAsync(userId);
         }
 
         public async Task<User> GetUserByIdAsync(Guid userId)
