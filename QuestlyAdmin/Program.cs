@@ -1,17 +1,12 @@
 ﻿using System.Text;
 using DataModels;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using QuestlyAdmin.Helpers;
 using QuestlyAdmin.Queries;
 using QuestlyAdmin.Repositories;
 using QuestlyAdmin.Services;
-using QuestlyAdmin.DataBase;
 using QuestlyAdmin.Mutations;
 
 namespace QuestlyAdmin

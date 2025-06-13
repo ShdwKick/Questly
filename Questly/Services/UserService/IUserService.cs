@@ -5,10 +5,11 @@ namespace Questly.Services
     public interface IUserService
     {
         public Task<User> GetUserByToken();
-        public Task<User> GetUserById(Guid userId);
+        public Task<User> GetUserByIdAsync(Guid userId);
 
-        Task<string> CreateUser(UserForCreate user);
-        Task<string> LoginUser(string login, string password);
-        Task<Authorization> TryRefreshTokenAsync(string oldToken);
+        Task<TokenPair> CreateUserAsync(UserForCreate ufc, string userAgent, string ip);
+        Task<TokenPair> LoginUser(string username, string password, string userAgent, string ip);
+        Task<string> TryRefreshAccessTokenAsync(string refreshToken);
+        Task<bool> Logout(string refreshToken);
     }
 }

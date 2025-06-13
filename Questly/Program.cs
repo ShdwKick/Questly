@@ -1,4 +1,6 @@
-﻿using System.Text;
+﻿using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 using DataModels;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -89,7 +91,7 @@ namespace Questly
                     options.TokenValidationParameters = new TokenValidationParameters
                     {
                         ValidateIssuerSigningKey = true,
-                        IssuerSigningKey = securityKey,
+                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(ConfigurationHelper.GetServerKey())),
                         ValidateIssuer = true,
                         ValidIssuer = ConfigurationHelper.GetIssuer(),
                         ValidateAudience = true,
@@ -99,7 +101,7 @@ namespace Questly
                     };
                     options.Events = new JwtBearerEvents
                     {
-                        OnAuthenticationFailed = _ => Task.FromResult("AUTH_FAILED_PROBLEM")
+                        OnAuthenticationFailed = _ => Task.FromResult("AUTH_FAILED_PROBLEM"),
                     };
                 });
             builder.WebHost.UseUrls("http://0.0.0.0:5000");

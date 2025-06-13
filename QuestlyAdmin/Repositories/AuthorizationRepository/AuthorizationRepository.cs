@@ -1,7 +1,6 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
 using DataModels;
 using Microsoft.EntityFrameworkCore;
-using QuestlyAdmin.DataBase;
 using QuestlyAdmin.Helpers;
 
 namespace QuestlyAdmin.Repositories
@@ -9,57 +8,91 @@ namespace QuestlyAdmin.Repositories
     public class AuthorizationRepository : IAuthorizationRepository
     {
         private readonly DatabaseContext _databaseConnection;
+        private readonly IUserRepository _userRepository;
 
-        public AuthorizationRepository(DatabaseContext databaseConnection)
+        public AuthorizationRepository(DatabaseContext databaseConnection, IUserRepository userRepository)
         {
             _databaseConnection = databaseConnection;
+            _userRepository = userRepository;
         }
-
-        public async Task<Authorization> GetUserAuth(Guid userId)
-        {
-            var auth = await _databaseConnection.Authorizations.FirstOrDefaultAsync(q=>q.UserId == userId);
         
-            if(auth == null)
-                auth = new Authorization
-                {
-                    Id = Guid.NewGuid(),
-                    UserId = userId
-                };
-        
-            return auth;
+        public async Task<string> RefreshAccessToken(string refreshToken)
+        {
+            var hashed = HashHelper.ComputeHash(refreshToken);
+
+            var session = await _databaseConnection.RefreshSessions
+                .FirstOrDefaultAsync(s =>
+                    s.RefreshTokenHash == hashed &&
+                    s.RevokedAt == null &&
+                    s.ExpiresAt > DateTime.UtcNow);
+
+            if (session == null)
+                throw new Exception("Invalid or expired refresh token");
+
+            var user = await _userRepository.GetUserByIdAsync(session.UserId);
+            if (user == null)
+                throw new Exception("User not found");
+
+            var jti = Guid.NewGuid().ToString();
+            var accessToken = new JwtSecurityTokenHandler().WriteToken(
+                TokenHelper.GenerateAccessToken(user.Id.ToString(), jti));
+
+            return accessToken;
         }
 
-        public async Task<Authorization> TryRefreshTokenAsync(User user, string oldToken)
+
+        public async Task<TokenPair> RefreshTokens(string refreshToken, string userAgent, string ip)
         {
-            var authorizationToken = await GetUserAuth(user.Id);
-            if (authorizationToken == null) 
-                throw new ArgumentException("OLD_TOKEN_NOT_FOUND_PROBLEM");
+            var hashed = HashHelper.ComputeHash(refreshToken);
 
-            if (HashHelper.ComputeHash(oldToken) != authorizationToken.AuthTokenHash)
-                throw new ArgumentException("CORRUPTED_TOKEN_DETECTED_PROBLEM");
-        
-            return await GenerateNewTokenForUser(user, authorizationToken);
-        }
+            var session = await _databaseConnection.RefreshSessions
+                .FirstOrDefaultAsync(s => s.RefreshTokenHash == hashed && s.RevokedAt == null && s.ExpiresAt > DateTime.UtcNow);
 
-        public async Task<Authorization> GenerateNewTokenForUser(User user, bool needRefreshId = false)
-        {
-            return await GenerateNewTokenForUser(user, null, needRefreshId);
-        }
-        public async Task<Authorization> GenerateNewTokenForUser(User user, Authorization? auth, bool needRefreshId = false)
-        {
-            var token = new JwtSecurityTokenHandler().WriteToken(TokenHelper.GenerateNewToken(user.Id.ToString()));
+            if (session == null)
+                throw new Exception("Invalid refresh token");
 
-            auth ??= await GetUserAuth(user.Id);
-            if (auth == null)
-                throw new ArgumentException("TOKEN_GENERATION_PROBLEM");
+            var user = await _userRepository.GetUserByIdAsync(session.UserId);
+            if (user == null)
+                throw new Exception("User not found");
 
-            if(needRefreshId)
-                auth.Id = Guid.NewGuid();
-            auth.AuthToken = token;
-            auth.AuthTokenHash = HashHelper.ComputeHash(auth.AuthToken);
+            // Revoke old session (optional, if using rotation)
+            session.RevokedAt = DateTime.UtcNow;
+
+            var jti = Guid.NewGuid().ToString();
+            var tokens = TokenHelper.GenerateTokens(user, jti);
+
+            var newSession = new RefreshSession
+            {
+                Id = Guid.NewGuid(),
+                UserId = user.Id,
+                RefreshTokenHash = HashHelper.ComputeHash(tokens.RefreshToken),
+                UserAgent = userAgent,
+                IpAddress = ip,
+                CreatedAt = DateTime.UtcNow,
+                ExpiresAt = DateTime.UtcNow.AddDays(30)
+            };
+
+            _databaseConnection.RefreshSessions.Add(newSession);
             await _databaseConnection.SaveChangesAsync();
+
+            return tokens;
+        }
         
-            return auth;
+        public async Task<bool> Logout(string refreshToken)
+        {
+            var hashed = HashHelper.ComputeHash(refreshToken);
+
+            var session = await _databaseConnection.RefreshSessions
+                .FirstOrDefaultAsync(s => s.RefreshTokenHash == hashed && s.RevokedAt == null);
+
+            if (session != null)
+            {
+                session.RevokedAt = DateTime.UtcNow;
+                int affectedRows = await _databaseConnection.SaveChangesAsync();
+                return affectedRows > 1;
+            }
+
+            return false;
         }
     }
 }

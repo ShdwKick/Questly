@@ -28,7 +28,7 @@ public class UserHelper : BaseHelper
         if (!Guid.TryParse(claim.Value, out var userId))
             throw new ArgumentException("AUTH_TOKEN_CLAIM_INVALID");
 
-        var user = await userRepo.GetUserAsync(userId);
+        var user = await userRepo.GetUserByIdAsync(userId);
         if (user == null)
             throw new KeyNotFoundException("USER_NOT_FOUND_PROBLEM");
 

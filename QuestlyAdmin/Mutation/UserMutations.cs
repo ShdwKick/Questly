@@ -1,4 +1,5 @@
-﻿using DataModels.DTOs;
+﻿using DataModels;
+using DataModels.DTOs;
 using QuestlyAdmin.Services;
 
 namespace QuestlyAdmin.Mutations;
@@ -17,10 +18,15 @@ public class UserMutations
     {
         return await _userService.ChangeUserBlockStatusAsync(blockUser);
     }
-    
-    public async Task<string> LoginUser(string login, string password)
+
+    [GraphQLDescription("Мутация для авторизации пользователя, возвращает новый jwt токен")]
+    public async Task<TokenPair> LoginUser(string login, string password, [Service] IHttpContextAccessor httpContextAccessor)
     {
-        return await _userService.LoginUser(login, password);
+        var httpContext = httpContextAccessor.HttpContext;
+        var userAgent = httpContext?.Request.Headers["User-Agent"].ToString() ?? "Unknown";
+        var ip = httpContext?.Connection?.RemoteIpAddress?.ToString() ?? "Unknown";
+        
+        return await _userService.LoginUser(login, password, userAgent, ip);
     }
 
 }

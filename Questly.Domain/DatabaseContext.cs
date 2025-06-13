@@ -8,7 +8,6 @@ public class DatabaseContext : DbContext
 {
     public DbSet<User> Users { get; set; }
     public DbSet<UserAchievement> UserAchievements { get; set; }
-    public DbSet<Authorization> Authorizations { get; set; }
     public DbSet<City> Cities { get; set; }
     public DbSet<Achievement> Achievements { get; set; }
     public DbSet<AchievementCategory> AchievementCategories { get; set; }
@@ -17,6 +16,7 @@ public class DatabaseContext : DbContext
     public DbSet<Leaderboard> Leaderboard { get; set; }
     public DbSet<Partner> Partners { get; set; }
     public DbSet<BlockUser> BlockUserHistory { get; set; }
+    public DbSet<RefreshSession> RefreshSessions { get; set; }
         
     private readonly string _connectionString;
     
@@ -38,18 +38,42 @@ public class DatabaseContext : DbContext
             entity.HasIndex(e => e.Email).IsUnique();
             
         });
-
-        // Authorization
-        modelBuilder.Entity<Authorization>(entity =>
+        
+        // RefreshSession
+        modelBuilder.Entity<RefreshSession>(entity =>
         {
             entity.HasKey(e => e.Id);
-            entity.Property(e => e.UserId).IsRequired();
-            entity.Property(e => e.AuthToken).IsRequired();
+
+            entity.Property(e => e.RefreshTokenHash)
+                .HasMaxLength(512)
+                .IsRequired();
+
+            entity.Property(e => e.UserAgent)
+                .HasMaxLength(256)
+                .IsRequired(false);
+
+            entity.Property(e => e.IpAddress)
+                .HasMaxLength(64)
+                .IsRequired(false);
+
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("now()");
+
+            entity.Property(e => e.ExpiresAt)
+                .IsRequired();
+
+            entity.Property(e => e.RevokedAt)
+                .IsRequired(false);
 
             entity.HasOne(e => e.User)
                 .WithMany()
-                .HasForeignKey(e => e.UserId);
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(e => e.UserId);
+            entity.HasIndex(e => e.RefreshTokenHash).IsUnique();
         });
+
 
         // City
         modelBuilder.Entity<City>(entity =>

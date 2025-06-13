@@ -1,16 +1,18 @@
 ﻿using DataModels;
 using DataModels.DTOs;
 
+// ReSharper disable All
 namespace QuestlyAdmin.Repositories
 {
     public interface IUserRepository
     {
-        Task<User> GetUserAsync(Guid userId);
+        Task<User> GetUserByIdAsync(Guid userId);
         Task<bool> DoesUserExistAsync(string name);
         Task<bool> DoesUserExistAsync(Guid userId);
-        Task<string> LoginUser(string username, string password);
-        Task<bool> ChangeUserBlockStatus(BlockUserDTO blockUser);
-        Task<Authorization> TryRefreshTokenAsync(string oldToken);
+        Task<TokenPair> LoginUserAsync(string username, string password, string userAgent, string ip);
+        //Task<TokenPair> CreateUserAsync(UserForCreate ufc, string userAgent, string ip);
+        Task<bool> ChangeUserBlockStatusAsync(BlockUserDTO dto);
+        
         
         //TODO: УДОЛИ
         Task DropAllUsers();

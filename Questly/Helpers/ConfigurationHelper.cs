@@ -12,11 +12,6 @@
             return Environment.GetEnvironmentVariable("SERVER_KEY");
         }
 
-        public static string GetBaseUrl()
-        {
-            return Environment.GetEnvironmentVariable("BASE_URL");
-        }
-
         public static string GetIssuer()
         {
             return Environment.GetEnvironmentVariable("ISSUER");
