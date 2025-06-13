@@ -77,7 +77,8 @@ namespace Questly
                 .AddTypeExtension<UserMutations>()
                 
                 .AddInMemorySubscriptions()
-                .AddAuthorization();
+                .AddAuthorization()
+                .AddFiltering();
             
             
 

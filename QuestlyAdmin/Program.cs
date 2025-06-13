@@ -79,7 +79,8 @@ namespace QuestlyAdmin
                 .AddTypeExtension<CitiesMutations>()
                 
                 .AddInMemorySubscriptions()
-                .AddAuthorization();
+                .AddAuthorization()
+                .AddFiltering();
             
             
 
