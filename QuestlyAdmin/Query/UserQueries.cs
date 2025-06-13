@@ -29,5 +29,13 @@ namespace QuestlyAdmin.Queries
         {
             return await _userService?.GetUserById(userId);
         }
+
+        [Authorize]
+        [UsePaging]
+        [UseFiltering]
+        public IQueryable<User> GetAllUsers()
+        {
+            return _userService.GetAllUsers();
+        }
     }
 }

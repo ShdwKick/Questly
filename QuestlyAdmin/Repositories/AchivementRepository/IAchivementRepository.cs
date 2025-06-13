@@ -14,5 +14,6 @@ namespace QuestlyAdmin.Repositories
         Task<bool> RemoveAchievements(List<Guid> achievementsId);
         Task<bool> DoesAchievementExist(Guid achievementId);
         Task<bool> DoesAchievementExist(string achievementName);
+        IQueryable<Achievement> GetCityAchievements(Guid cityId);
     }
 }

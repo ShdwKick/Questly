@@ -101,5 +101,10 @@ namespace QuestlyAdmin.Repositories
         {
             return await _databaseConnection.Achievements.AnyAsync(q => q.Title == achievementName);
         }
+
+        public IQueryable<Achievement> GetCityAchievements(Guid cityId)
+        {
+            return _databaseConnection.Achievements.Where(q => q.CategoryId == cityId).AsQueryable();
+        }
     }
 }

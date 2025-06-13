@@ -36,6 +36,14 @@ namespace Questly.Queries
         {
             return await _achievementService.GetUserAchievements(userId);
         }
+        
+        [Authorize]
+        [UsePaging]
+        [UseFiltering]
+        public IQueryable<Achievement> GetCityAchievements(Guid cityId)
+        {
+            return _achievementService.GetCityAchievements(cityId);
+        }
 
     }
 }

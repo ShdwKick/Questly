@@ -12,6 +12,7 @@ namespace QuestlyAdmin.Repositories
         Task<TokenPair> LoginUserAsync(string username, string password, string userAgent, string ip);
         //Task<TokenPair> CreateUserAsync(UserForCreate ufc, string userAgent, string ip);
         Task<bool> ChangeUserBlockStatusAsync(BlockUserDTO dto);
+        IQueryable<User> GetAllUsers();
         
         
         //TODO: УДОЛИ

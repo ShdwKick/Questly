@@ -1,7 +1,5 @@
 ﻿using DataModels;
-using HotChocolate;
 using HotChocolate.Authorization;
-using HotChocolate.Types;
 using QuestlyAdmin.Services;
 
 namespace QuestlyAdmin.Queries
@@ -35,6 +33,14 @@ namespace QuestlyAdmin.Queries
         public async Task<List<UserAchievement>> GetUserAchievements(Guid userId)
         {
             return await _achievementService.GetUserAchievements(userId);
+        }
+
+        [Authorize]
+        [UsePaging]
+        [UseFiltering]
+        public IQueryable<Achievement> GetCityAchievements(Guid cityId)
+        {
+            return _achievementService.GetCityAchievements(cityId);
         }
 
     }

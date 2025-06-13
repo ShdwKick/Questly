@@ -11,5 +11,6 @@ namespace Questly.Services
         Task<TokenPair> LoginUser(string username, string password, string userAgent, string ip);
         Task<string> TryRefreshAccessTokenAsync(string refreshToken);
         Task<bool> Logout(string refreshToken);
+        IQueryable<User> GetAllUsers();
     }
 }

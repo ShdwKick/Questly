@@ -58,13 +58,17 @@ namespace QuestlyAdmin.Services
             return await _achievementRepository.UpdateAchievement(achievement);
         }
 
-
         public Task<bool> RemoveAchievement(List<Guid> achievementsId)
         {
             if(achievementsId == null || achievementsId.Count == 0)
                 throw new ArgumentNullException(nameof(achievementsId));
             
             return _achievementRepository.RemoveAchievements(achievementsId);
+        }
+
+        public IQueryable<Achievement> GetCityAchievements(Guid cityId)
+        {
+            return _achievementRepository.GetCityAchievements(cityId);
         }
     }
 }

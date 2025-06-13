@@ -13,5 +13,6 @@ namespace QuestlyAdmin.Services
         Task<string> TryRefreshAccessTokenAsync(string refreshToken);
         Task<bool> Logout(string refreshToken);
         Task<bool> ChangeUserBlockStatusAsync(BlockUserDTO dto);
+        IQueryable<User> GetAllUsers();
     }
 }

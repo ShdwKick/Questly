@@ -66,5 +66,10 @@ namespace Questly.Services
         {
             return await _authorizationRepository.Logout(refreshToken);
         }
+        
+        public IQueryable<User> GetAllUsers()
+        {
+            return _userRepository.GetAllUsers();
+        }
     }
 }

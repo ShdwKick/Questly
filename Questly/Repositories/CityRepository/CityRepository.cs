@@ -32,7 +32,11 @@ namespace Questly.Repositories
         {
             var city = await _databaseConnection.Cities.FirstOrDefaultAsync(q=>q.Id == cityId);
             if(city == null)
-                throw new Exception($"City with id:{cityId} not found");
+                throw new GraphQLException(
+                    ErrorBuilder.New()
+                        .SetMessage($"City with id:{cityId} not found")
+                        .SetCode("CITY_NOT_FOUND")
+                        .Build());
         
             return city;
         }

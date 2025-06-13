@@ -24,24 +24,18 @@ namespace Questly.Repositories
                 .FirstOrDefaultAsync(q => q.Id == userId);
 
             if (user == null)
-                throw new Exception($"User with id {userId} not found");
+                throw new GraphQLException(
+                    ErrorBuilder.New()
+                        .SetMessage($"User with id {userId} not found")
+                        .SetCode("USER_NOT_FOUND")
+                        .Build());
 
             return user;
         }
 
         public async Task<bool> DoesUserExistAsync(string name)
         {
-            try
-            {
-                _logger.LogInformation($"Check is user exist with name {name}. in database with id {_databaseConnection.Database} and user count {_databaseConnection.Users.Count()}");
-                return await _databaseConnection.Users.AnyAsync(q => q.Username.Equals(name));
-            }
-            catch (Exception e)
-            {
-                _logger.LogError($"Error occured while checking does user exist. Exception: {e}");
-                throw;
-            }
-            
+            return await _databaseConnection.Users.AnyAsync(q => q.Username.Equals(name));
         }
 
         public async Task<bool> DoesUserExistAsync(Guid userId)
@@ -53,7 +47,11 @@ namespace Questly.Repositories
         {
             var user = await _databaseConnection.Users.FirstOrDefaultAsync(q => q.Username == username);
             if (user == null || user.PasswordHash != HashHelper.ComputeHash(password, user.Salt))
-                throw new Exception("Invalid username or password");
+                throw new GraphQLException(
+                    ErrorBuilder.New()
+                        .SetMessage($"Invalid username or password")
+                        .SetCode("INVALID_USER_CREDENTIALS")
+                        .Build());
 
             var existingSession = await _databaseConnection.RefreshSessions
                 .FirstOrDefaultAsync(s =>
@@ -126,11 +124,15 @@ namespace Questly.Repositories
             return tokens;
         }
         
-
         public async Task DropAllUsers()
         {
             await _databaseConnection.Users.ExecuteDeleteAsync();
             await _databaseConnection.SaveChangesAsync();
+        }
+        
+        public IQueryable<User> GetAllUsers()
+        {
+            return _databaseConnection.Users.AsQueryable();
         }
     }
 }

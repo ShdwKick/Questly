@@ -75,5 +75,10 @@ namespace QuestlyAdmin.Services
                 throw new ArgumentNullException("Invalid user data");
             return await _userRepository.ChangeUserBlockStatusAsync(dto);
         }
+
+        public IQueryable<User> GetAllUsers()
+        {
+            return _userRepository.GetAllUsers();
+        }
     }
 }

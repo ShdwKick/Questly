@@ -12,5 +12,6 @@ namespace QuestlyAdmin.Services
         Task<bool> CreateAchievements(List<AchievementDTO> achievements);
         Task<bool> UpdateAchievement(Achievement achievement);
         Task<bool> RemoveAchievement(List<Guid> achievementsId);
+        IQueryable<Achievement> GetCityAchievements(Guid cityId);
     }
 }

@@ -35,6 +35,14 @@ namespace Questly.Queries
         {
             return await _userService.Logout(token);
         }
+        
+        [Authorize]
+        [UsePaging]
+        [UseFiltering]
+        public IQueryable<User> GetAllUsers()
+        {
+            return _userService.GetAllUsers();
+        }
 
     }
 }

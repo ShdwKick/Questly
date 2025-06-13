@@ -53,7 +53,18 @@ namespace QuestlyAdmin.Repositories
         {
             var user = await _databaseConnection.Users.FirstOrDefaultAsync(q => q.Username == username);
             if (user == null || user.PasswordHash != HashHelper.ComputeHash(password, user.Salt))
-                throw new Exception("Invalid username or password");
+                throw new GraphQLException(
+                    ErrorBuilder.New()
+                        .SetMessage("Invalid username or password")
+                        .SetCode("AUTH_INVALID_CREDENTIALS")
+                        .Build());
+            
+            if(user.IsBlocked)
+                throw new GraphQLException(
+                    ErrorBuilder.New()
+                        .SetMessage("User blocked")
+                        .SetCode("USER_BLOCKED")
+                        .Build());
 
             var existingSession = await _databaseConnection.RefreshSessions
                 .FirstOrDefaultAsync(s =>
@@ -64,8 +75,6 @@ namespace QuestlyAdmin.Repositories
 
             if (existingSession != null)
             {
-                var oldRefresh = existingSession.RefreshTokenHash;
-                
                 var jti = Guid.NewGuid().ToString();
                 var accessToken = new JwtSecurityTokenHandler().WriteToken(
                     TokenHelper.GenerateAccessToken(user.Id.ToString(), jti));
@@ -148,6 +157,11 @@ namespace QuestlyAdmin.Repositories
             
             int affectedRows = await _databaseConnection.SaveChangesAsync();
             return affectedRows > 0;
+        }
+
+        public IQueryable<User> GetAllUsers()
+        {
+            return _databaseConnection.Users.AsQueryable();
         }
 
         public async Task DropAllUsers()
