@@ -61,7 +61,7 @@ jobs:
             /k:"ShdwKick_Questly" \
             /o:"burninghouse" \
             /d:sonar.host.url="https://sonarcloud.io"  \
-            /d:sonar.login="$SONAR_TOKEN" \
+            /d:sonar.token="$SONAR_TOKEN" \
             /d:sonar.cs.dotcover.reportsPaths="**/coverage.opencover.xml"
       
       - name: 🔨 Build and analyze project
@@ -74,7 +74,7 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: |
           ./.sonar/scanner/dotnet-sonarscanner end \
-            /d:sonar.login="$SONAR_TOKEN"
+            /d:sonar.token="$SONAR_TOKEN"
         
       - name: 🛠 Build Questly image
         run: docker build -t ${{ vars.QUESTLY_IMAGE }} -f Questly/Dockerfile .
