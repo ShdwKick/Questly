@@ -44,10 +44,9 @@ jobs:
 
       - name: Install SonarQube Cloud scanner
         if: steps.cache-sonar-scanner.outputs.cache-hit != 'true'
-        shell: powershell
         run: |
-          New-Item -Path .\.sonar\scanner -ItemType Directory
-          dotnet tool update dotnet-sonarscanner --tool-path .\.sonar\scanner
+          mkdir -p ./.sonar/scanner
+          dotnet tool update dotnet-sonarscanner --tool-path ./.sonar/scanner
 
       - name: 🧰 Setup .NET
         uses: actions/setup-dotnet@v4
@@ -57,24 +56,25 @@ jobs:
       - name: 🧪 Start SonarQube analysis
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        shell: powershell
         run: |
-          .\.sonar\scanner\dotnet-sonarscanner begin /k:"ShdwKick_Questly" /o:"burninghouse" `
-            /d:sonar.host.url="https://sonarcloud.io"  `
-            /d:sonar.login="${{ secrets.SONAR_TOKEN }}" `
+          ./.sonar/scanner/dotnet-sonarscanner begin \
+            /k:"ShdwKick_Questly" \
+            /o:"burninghouse" \
+            /d:sonar.host.url="https://sonarcloud.io"  \
+            /d:sonar.login="$SONAR_TOKEN" \
             /d:sonar.cs.dotcover.reportsPaths="**/coverage.opencover.xml"
-
+      
       - name: 🔨 Build and analyze project
         run: |
           dotnet restore ${{ vars.SOLUTION_NAME }}
           dotnet build ${{ vars.SOLUTION_NAME }} --configuration Debug --no-restore
-          
+      
       - name: 🧪 Finish SonarQube analysis
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        shell: powershell
         run: |
-          .\.sonar\scanner\dotnet-sonarscanner end /d:sonar.login="${{ secrets.SONAR_TOKEN }}"
+          ./.sonar/scanner/dotnet-sonarscanner end \
+            /d:sonar.login="$SONAR_TOKEN"
         
       - name: 🛠 Build Questly image
         run: docker build -t ${{ vars.QUESTLY_IMAGE }} -f Questly/Dockerfile .
