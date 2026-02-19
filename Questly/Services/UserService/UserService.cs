@@ -1,4 +1,5 @@
 ﻿using DataModels;
+using DataModels.Helpers;
 using Questly.Repositories;
 using Questly.Helpers;
 
@@ -8,18 +9,21 @@ namespace Questly.Services
     {
         private readonly IUserRepository _userRepository;
         private readonly IAuthorizationRepository _authorizationRepository;
+        private readonly IHeaderHelper _headerHelper;
         private readonly ILogger<UserService> _logger;
 
-        public UserService(IUserRepository userRepository, IAuthorizationRepository authorizationRepository, ILogger<UserService> logger)
+        public UserService(IUserRepository userRepository, IAuthorizationRepository authorizationRepository,
+            ILogger<UserService> logger, IHeaderHelper headerHelper)
         {
             _userRepository = userRepository;
             _authorizationRepository = authorizationRepository;
             _logger = logger;
+            _headerHelper = headerHelper;
         }
 
         public async Task<User> GetUserByToken()
         {
-            var userId = UserHelper.GetUserIdFromHeader();
+            var userId = _headerHelper.GetUserIdFromHeader();
             return await _userRepository.GetUserByIdAsync(userId);
         }
 
@@ -66,7 +70,7 @@ namespace Questly.Services
         {
             return await _authorizationRepository.Logout(refreshToken);
         }
-        
+
         public IQueryable<User> GetAllUsers()
         {
             return _userRepository.GetAllUsers();

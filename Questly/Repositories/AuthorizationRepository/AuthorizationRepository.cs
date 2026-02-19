@@ -1,5 +1,6 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
 using DataModels;
+using DataModels.Helpers;
 using Microsoft.EntityFrameworkCore;
 using Questly.DataBase;
 using Questly.Helpers;
@@ -11,11 +12,13 @@ namespace Questly.Repositories
     {
         private readonly DatabaseContext _databaseConnection;
         private readonly IUserRepository _userRepository;
+        private readonly ITokenHelper _tokenHelper;
 
-        public AuthorizationRepository(DatabaseContext databaseConnection, IUserRepository userRepository)
+        public AuthorizationRepository(DatabaseContext databaseConnection, IUserRepository userRepository, ITokenHelper tokenHelper)
         {
             _databaseConnection = databaseConnection;
             _userRepository = userRepository;
+            _tokenHelper = tokenHelper;
         }
         
         public async Task<string> RefreshAccessToken(string refreshToken)
@@ -45,7 +48,7 @@ namespace Questly.Repositories
 
             var jti = Guid.NewGuid().ToString();
             var accessToken = new JwtSecurityTokenHandler().WriteToken(
-                TokenHelper.GenerateAccessToken(user.Id.ToString(), jti));
+                _tokenHelper.GenerateAccessToken(user.Id.ToString(), jti));
 
             return accessToken;
         }
@@ -73,11 +76,10 @@ namespace Questly.Repositories
                         .SetCode("USER_NOT_FOUND")
                         .Build());
 
-            // Revoke old session (optional, if using rotation)
             session.RevokedAt = DateTime.UtcNow;
 
             var jti = Guid.NewGuid().ToString();
-            var tokens = TokenHelper.GenerateTokens(user, jti);
+            var tokens = _tokenHelper.GenerateTokens(user, jti);
 
             var newSession = new RefreshSession
             {

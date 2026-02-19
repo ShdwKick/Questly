@@ -1,5 +1,6 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
 using DataModels;
+using DataModels.Helpers;
 using Microsoft.EntityFrameworkCore;
 using Questly.DataBase;
 using Questly.Helpers;
@@ -11,11 +12,13 @@ namespace Questly.Repositories
     {
         private readonly DatabaseContext _databaseConnection;
         private readonly ILogger<UserRepository> _logger;
+        private readonly ITokenHelper _tokenHelper;
 
-        public UserRepository(DatabaseContext databaseConnection, ILogger<UserRepository> logger)
+        public UserRepository(DatabaseContext databaseConnection, ILogger<UserRepository> logger, ITokenHelper tokenHelper)
         {
             _databaseConnection = databaseConnection;
             _logger = logger;
+            _tokenHelper = tokenHelper;
         }
 
         public async Task<User> GetUserByIdAsync(Guid userId)
@@ -62,17 +65,15 @@ namespace Questly.Repositories
 
             if (existingSession != null)
             {
-                var oldRefresh = existingSession.RefreshTokenHash;
-                
                 var jti = Guid.NewGuid().ToString();
                 var accessToken = new JwtSecurityTokenHandler().WriteToken(
-                    TokenHelper.GenerateAccessToken(user.Id.ToString(), jti));
+                    _tokenHelper.GenerateAccessToken(user.Id.ToString(), jti));
 
                 return new TokenPair(accessToken, null);
             }
 
             var jtiNew = Guid.NewGuid().ToString();
-            var tokens = TokenHelper.GenerateTokens(user, jtiNew);
+            var tokens = _tokenHelper.GenerateTokens(user, jtiNew);
 
             var session = new RefreshSession
             {
@@ -105,7 +106,7 @@ namespace Questly.Repositories
             user.PasswordHash = HashHelper.ComputeHash(ufc.Password + user.Salt);
 
             var jti = Guid.NewGuid().ToString();
-            var tokens = TokenHelper.GenerateTokens(user, jti);
+            var tokens = _tokenHelper.GenerateTokens(user, jti);
 
             var session = new RefreshSession
             {

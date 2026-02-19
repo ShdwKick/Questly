@@ -15,6 +15,8 @@ namespace QuestlyAdmin
 {
     public static class Program
     {
+        //TODO: да в целом всё надо обновить в этом проете
+        
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
@@ -24,7 +26,6 @@ namespace QuestlyAdmin
             builder.Services.AddHttpClient();
             builder.Services.AddHttpContextAccessor();
             builder.Services.AddMemoryCache();
-            //builder.Services.AddWebSockets(options => { options.KeepAliveInterval = TimeSpan.FromSeconds(120); });
 
             builder.Services.AddHostedService<DatabaseInitializerService>();
 

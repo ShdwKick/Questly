@@ -14,9 +14,9 @@ public class AchievementMutations
         _achievementService = achievementService;
     }
 
-    public async Task<bool> CreateAchievements(List<AchievementDTO> achievements)
+    public async Task<bool> CreateAchievements(AchievementDTO achievement)
     {
-        return await _achievementService.CreateAchievements(achievements);
+        return await _achievementService.CreateAchievement(achievement);
     }
     
     public async Task<bool> UpdateAchievement(Achievement achievement)

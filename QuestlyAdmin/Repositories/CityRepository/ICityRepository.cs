@@ -12,7 +12,7 @@ namespace QuestlyAdmin.Repositories
         Task<List<City>> GetCitiesList();
         Task<City> GetCityInfo(Guid cityId);
 
-        Task<bool> CreateCities(List<CityDTO> cities);
+        Task<bool> CreateCity(CityDTO city);
         Task<bool> UpdateCity(City city);
         Task<bool> RemoveCities(List<Guid> cities);
     }

@@ -41,9 +41,18 @@ namespace QuestlyAdmin.Repositories
             return city;
         }
 
-        public Task<bool> CreateCities(List<CityDTO> cities)
+        public async Task<bool> CreateCity(CityDTO city)
         {
-            throw new NotImplementedException();
+            _databaseConnection.Cities.Add(new City
+            {
+                Id = Guid.NewGuid(),
+                Name = city.Name,
+                Description = city.Description,
+                Lat = city.Lat,
+                Lon = city.Lon,
+            });
+            int affectedRows = await _databaseConnection.SaveChangesAsync();
+            return affectedRows == 1;
         }
         public async Task<bool> UpdateCity(City city)
         {

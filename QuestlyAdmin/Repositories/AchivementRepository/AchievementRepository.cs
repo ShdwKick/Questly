@@ -20,7 +20,7 @@ namespace QuestlyAdmin.Repositories
                 throw new GraphQLException(
                     ErrorBuilder.New()
                         .SetMessage($"Achievement with id {achId} not found")
-                            .SetCode("ACHIEVEMENT_NOT_FOUND")
+                        .SetCode("ACHIEVEMENT_NOT_FOUND")
                         .Build());
 
             return achievement;
@@ -28,7 +28,8 @@ namespace QuestlyAdmin.Repositories
 
         public async Task<List<UserAchievement>> GetUserCompletedAchievements(Guid userId)
         {
-            return await _databaseConnection.UserAchievements.Where(q => q.UserId == userId && q.IsCompleted).ToListAsync();
+            return await _databaseConnection.UserAchievements.Where(q => q.UserId == userId && q.IsCompleted)
+                .ToListAsync();
         }
 
         public async Task<List<UserAchievement>> GetUserAchievements(Guid userId)
@@ -36,36 +37,34 @@ namespace QuestlyAdmin.Repositories
             return await _databaseConnection.UserAchievements.Where(q => q.UserId == userId).ToListAsync();
         }
 
-        public async Task<bool> CreateAchievements(List<AchievementDTO> achievements)
+        public async Task<bool> CreateAchievement(AchievementDTO achievement)
         {
-            var newAchievements = new List<Achievement>();
-            foreach (var dto in achievements)
+            if (await DoesAchievementExist(achievement.Title))
+                throw new GraphQLException(
+                    ErrorBuilder.New()
+                        .SetMessage($"Achievement with id {achievement.Title} already exists")
+                        .SetCode("ACHIEVEMENT_ALREADY_EXISTS")
+                        .Build());
+
+            var newAchievement = new Achievement
             {
-                if(await DoesAchievementExist(dto.Title))
-                    continue;
-                
-                newAchievements.Add(new Achievement
-                {
-                    Id = Guid.NewGuid(),
-                    Title = dto.Title,
-                    Description = dto.Description,
-                    IconUrl = dto.IconUrl,
-                    Category = dto.Category,
-                    CategoryId = dto.CategoryId,
-                    City = dto.City,
-                    CityId = dto.CityId,
-                    CreatedAt = DateTime.UtcNow,
-                    Lat = dto.Lat,
-                    Lon = dto.Lon,
-                    Goal = dto.Goal,
-                    RewardScore = dto.RewardScore,
-                    IsPartner = dto.IsPartner
-                });
-            }
-            if(newAchievements.Count == 0)
-                return false;
-            
-            await _databaseConnection.Achievements.AddRangeAsync(newAchievements);
+                Id = Guid.NewGuid(),
+                Title = achievement.Title,
+                Description = achievement.Description,
+                IconUrl = achievement.IconUrl,
+                Category = achievement.Category,
+                CategoryId = achievement.CategoryId,
+                City = achievement.City,
+                CityId = achievement.CityId,
+                CreatedAt = DateTime.UtcNow,
+                Lat = achievement.Lat,
+                Lon = achievement.Lon,
+                Goal = achievement.Goal,
+                RewardScore = achievement.RewardScore,
+                IsPartner = achievement.IsPartner
+            };
+
+            _databaseConnection.Achievements.Add(newAchievement);
             var affectedRows = await _databaseConnection.SaveChangesAsync();
 
             return affectedRows > 0;
@@ -77,7 +76,7 @@ namespace QuestlyAdmin.Repositories
 
             achivment = achievement;
             _databaseConnection.Achievements.Update(achivment);
-            
+
             var affectedRows = await _databaseConnection.SaveChangesAsync();
 
             return affectedRows > 0;
@@ -85,12 +84,13 @@ namespace QuestlyAdmin.Repositories
 
         public async Task<bool> RemoveAchievements(List<Guid> achievementsId)
         {
-            var achievements = await _databaseConnection.Achievements.Where(q => achievementsId.Contains(q.Id)).ToListAsync();
+            var achievements = await _databaseConnection.Achievements.Where(q => achievementsId.Contains(q.Id))
+                .ToListAsync();
             if (achievements.Count == 0)
                 return false;
-            
+
             _databaseConnection.Achievements.RemoveRange(achievements);
-            
+
             var affectedRows = await _databaseConnection.SaveChangesAsync();
 
             return affectedRows > 0;

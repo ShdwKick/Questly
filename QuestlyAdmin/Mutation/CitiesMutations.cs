@@ -14,9 +14,9 @@ public class CitiesMutations
         _cityService = cityService;
     }
 
-    public Task<bool> CreateCities(List<CityDTO> cities)
+    public Task<bool> CreateCity(CityDTO city)
     {
-        return _cityService.CreateCities(cities);
+        return _cityService.CreateCity(city);
     }
     
     public Task<bool> UpdateCity(City city)

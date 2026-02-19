@@ -3,23 +3,25 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using DataModels;
+using DataModels.Helpers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 
 namespace Questly.Helpers;
 
-public class TokenHelper : BaseHelper
+public class TokenHelper : ITokenHelper
 {
-    public static string GetTokenFromHeader()
+    private readonly IConfigurationHelper _configuration;
+    private readonly IHttpContextAccessor _httpContextAccessor;
+
+    public TokenHelper(IConfigurationHelper configuration)
     {
-        using var scope = _serviceProvider.CreateScope();
-        var httpContextAccessor = scope.ServiceProvider.GetRequiredService<IHttpContextAccessor>();
-
-        if (httpContextAccessor == null)
-            throw new ArgumentException("ERROR_OCCURRED");
-
-        var httpContext = httpContextAccessor.HttpContext;
+        _configuration = configuration;
+    }
+    public string GetTokenFromHeader()
+    {
+        var httpContext = _httpContextAccessor.HttpContext;
         string authorizationHeader = httpContext.Request.Headers["Authorization"];
 
         if (string.IsNullOrEmpty(authorizationHeader) || !authorizationHeader.StartsWith("Bearer "))
@@ -30,16 +32,16 @@ public class TokenHelper : BaseHelper
         return authorizationHeader.Substring("Bearer ".Length).Trim();
     }
     
-    public static TokenPair GenerateTokens(User user, string jti)
+    public TokenPair GenerateTokens(User user, string jti)
     {
         var accessToken = new JwtSecurityTokenHandler().WriteToken(GenerateAccessToken(user.Id.ToString(), jti));
         var refreshToken = GenerateRefreshToken();
         return new TokenPair(accessToken, refreshToken);
     }
     
-    public static JwtSecurityToken GenerateAccessToken(string userId, string jti)
+    public JwtSecurityToken GenerateAccessToken(string userId, string jti)
     {
-        var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(ConfigurationHelper.GetServerKey()));
+        var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration.GetServerKey()));
         var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
 
         var claims = new[]
@@ -50,15 +52,15 @@ public class TokenHelper : BaseHelper
         };
 
         return new JwtSecurityToken(
-            issuer: ConfigurationHelper.GetIssuer(),
-            audience: ConfigurationHelper.GetAudience(),
+            issuer: _configuration.GetIssuer(),
+            audience: _configuration.GetAudience(),
             claims: claims,
             expires: DateTime.UtcNow.AddMinutes(15),
             signingCredentials: credentials
         );
     }
-    
-    public static string GenerateRefreshToken()
+
+    private string GenerateRefreshToken()
     {
         var randomBytes = new byte[32];
         using var rng = RandomNumberGenerator.Create();

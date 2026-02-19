@@ -69,6 +69,13 @@ namespace QuestlyAdmin.Repositories
                         .SetMessage("User blocked")
                         .SetCode("USER_BLOCKED")
                         .Build());
+            
+            if(user.IsAdmin)
+                throw new GraphQLException(
+                    ErrorBuilder.New()
+                        .SetMessage("Unauthorized access to user")
+                        .SetCode("UNAUTHORIZED_ACCESS")
+                        .Build());
 
             var existingSession = await _databaseConnection.RefreshSessions
                 .FirstOrDefaultAsync(s =>

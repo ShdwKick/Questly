@@ -26,11 +26,11 @@ namespace QuestlyAdmin.Services
             return await _cityRepository.GetCityInfo(cityId);
         }
 
-        public Task<bool> CreateCities(List<CityDTO> cities)
+        public Task<bool> CreateCity(CityDTO city)
         {
-            if(cities == null || cities.Count == 0)
-                throw new ArgumentNullException(nameof(cities));
-            return _cityRepository.CreateCities(cities);
+            if(city == null)
+                throw new ArgumentNullException(nameof(city));
+            return _cityRepository.CreateCity(city);
         }
 
         public async Task<bool> UpdateCities(City city)

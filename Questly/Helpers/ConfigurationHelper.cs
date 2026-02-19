@@ -1,39 +1,22 @@
-﻿namespace Questly.Helpers
+﻿using DataModels.Helpers;
+
+namespace Questly.Infrastructure.Helpers
 {
-    public class ConfigurationHelper
+    public class ConfigurationHelper : IConfigurationHelper
     {
-        public static string GetSalt()
+        private readonly IConfiguration _configuration;
+
+        public ConfigurationHelper(IConfiguration configuration)
         {
-            return Environment.GetEnvironmentVariable("HASH_SALT");
+            _configuration = configuration;
         }
 
-        public static string GetServerKey()
-        {
-            return Environment.GetEnvironmentVariable("SERVER_KEY");
-        }
-
-        public static string GetIssuer()
-        {
-            return Environment.GetEnvironmentVariable("ISSUER");
-        }
-
-        public static string GetAudience()
-        {
-            return Environment.GetEnvironmentVariable("AUDIENCE");
-        }
-        
-        public static string GetRabbitHostName()
-        {
-            return Environment.GetEnvironmentVariable("RABBITMQ_HOSTNAME");
-        }
-        public static string GetRabbitUserName()
-        {
-            return Environment.GetEnvironmentVariable("RABBITMQ_USERNAME");
-        }
-        public static string GetRabbitPassword()
-        {
-            return Environment.GetEnvironmentVariable("RABBITMQ_PASSWORD");
-        }
-        
+        public string GetSalt() => _configuration["HASH_SALT"] ?? _configuration["HashSalt"];
+        public string GetServerKey() => _configuration["SERVER_KEY"] ?? _configuration["ServerKey"];
+        public string GetIssuer() => _configuration["ISSUER"] ?? _configuration["Issuer"];
+        public string GetAudience() => _configuration["AUDIENCE"] ?? _configuration["Audience"];
+        public string GetRabbitHostName() => _configuration["RABBITMQ_HOSTNAME"] ?? _configuration["RabbitMQ:HostName"];
+        public string GetRabbitUserName() => _configuration["RABBITMQ_USERNAME"] ?? _configuration["RabbitMQ:UserName"];
+        public string GetRabbitPassword() => _configuration["RABBITMQ_PASSWORD"] ?? _configuration["RabbitMQ:Password"];
     }
 }

@@ -47,12 +47,16 @@ namespace QuestlyAdmin.Services
             return await _achievementRepository.GetUserAchievements(userId);
         }
 
-        public async Task<bool> CreateAchievements(List<AchievementDTO> achievements)
+        public async Task<bool> CreateAchievement(AchievementDTO achievement)
         {
-            if(achievements == null || achievements.Count == 0)
-                throw new ArgumentNullException(nameof(achievements));
+            if(achievement == null)
+                throw new GraphQLException(
+                    ErrorBuilder.New()
+                        .SetMessage($"Empty achievement data")
+                        .SetCode("EMPTY_INPUT")
+                        .Build());
 
-            return await _achievementRepository.CreateAchievements(achievements);
+            return await _achievementRepository.CreateAchievement(achievement);
         }
 
         public async Task<bool> UpdateAchievement(Achievement achievement)

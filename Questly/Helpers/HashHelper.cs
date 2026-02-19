@@ -16,6 +16,10 @@ public class HashHelper : BaseHelper
     
     public static string ComputeHash(string input, string salt)
     {
+        if (string.IsNullOrWhiteSpace(input))
+            throw new ArgumentNullException(nameof(input));
+        if (string.IsNullOrWhiteSpace(salt))
+            throw new ArgumentNullException(nameof(salt));
         using SHA256 sha256 = SHA256.Create();
         byte[] inputBytes = Encoding.UTF8.GetBytes(input + salt);
         byte[] hashBytes = sha256.ComputeHash(inputBytes);
@@ -24,6 +28,8 @@ public class HashHelper : BaseHelper
     
     public static string ComputeHash(string input)
     {
+        if (string.IsNullOrWhiteSpace(input))
+            throw new ArgumentNullException(nameof(input));
         using SHA256 sha256 = SHA256.Create();
         byte[] inputBytes = Encoding.UTF8.GetBytes(input);
         byte[] hashBytes = sha256.ComputeHash(inputBytes);

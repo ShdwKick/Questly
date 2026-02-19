@@ -1,19 +1,20 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
-using DataModels;
-using Microsoft.Extensions.DependencyInjection;
-using Questly.Repositories;
-using KeyNotFoundException = System.Collections.Generic.KeyNotFoundException;
+using DataModels.Helpers;
 
 namespace Questly.Helpers;
 
-public class UserHelper : BaseHelper
+public class HeaderHelper : IHeaderHelper
 {
-    public static Guid GetUserIdFromHeader()
+    private readonly ITokenHelper _tokenHelper;
+
+    public HeaderHelper(ITokenHelper tokenHelper)
     {
-        using var scope = _serviceProvider.CreateScope();
-        var userRepo = scope.ServiceProvider.GetRequiredService<IUserRepository>();
-            
-        var token = TokenHelper.GetTokenFromHeader();
+        _tokenHelper = tokenHelper;
+    }
+
+    public Guid GetUserIdFromHeader()
+    {
+        var token = _tokenHelper.GetTokenFromHeader();
         if (string.IsNullOrWhiteSpace(token))
             throw new ArgumentException("AUTH_TOKEN_MISSING_PROBLEM", nameof(token));
 

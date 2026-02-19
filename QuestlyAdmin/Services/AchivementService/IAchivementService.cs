@@ -9,7 +9,7 @@ namespace QuestlyAdmin.Services
         Task<List<UserAchievement>> GetUserCompletedAchievements(Guid userId);
         Task<List<UserAchievement>> GetUserAchievements(Guid userId);
         
-        Task<bool> CreateAchievements(List<AchievementDTO> achievements);
+        Task<bool> CreateAchievement(AchievementDTO achievement);
         Task<bool> UpdateAchievement(Achievement achievement);
         Task<bool> RemoveAchievement(List<Guid> achievementsId);
         IQueryable<Achievement> GetCityAchievements(Guid cityId);

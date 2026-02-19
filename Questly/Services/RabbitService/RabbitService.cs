@@ -1,5 +1,6 @@
 ﻿using System.Text;
 using System.Text.Json;
+using DataModels.Helpers;
 using Questly.Helpers;
 using RabbitMQ.Client;
 
@@ -16,13 +17,13 @@ namespace Questly.Services
         private readonly string _confirmationRoutingKeyName;
         private readonly string _inviteRoutingKeyName;
 
-        public RabbitService()
+        public RabbitService(IConfigurationHelper configurationHelper)
         {
             _factory = new ConnectionFactory()
             {
-                HostName = ConfigurationHelper.GetRabbitHostName(),
-                UserName = ConfigurationHelper.GetRabbitUserName(),
-                Password = ConfigurationHelper.GetRabbitPassword(),
+                HostName = configurationHelper.GetRabbitHostName(),
+                UserName = configurationHelper.GetRabbitUserName(),
+                Password = configurationHelper.GetRabbitPassword(),
             };
             _exchangeName = "emailExchange";
             _recoveryRoutingKeyName = "email.recovery";
