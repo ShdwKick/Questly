@@ -108,6 +108,8 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
+            echo "vm.swappiness=30" | sudo tee -a /etc/sysctl.conf
+            sudo sysctl -p
             cd /root/QuestlyCompose
 
             cat > .env <<EOF
