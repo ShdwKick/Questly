@@ -117,10 +117,10 @@ jobs:
               POSTGRES_USER=${{ vars.POSTGRES_USER }}
               POSTGRES_PASSWORD=${{ vars.POSTGRES_PASSWORD }}
               POSTGRES_DB=${{ vars.POSTGRES_DB }}
-              Jwt__SERVER_KEY=${{ vars.SERVER_KEY }}
-              Jwt__HASH_SALT=${{ vars.HASH_SALT }}
-              Jwt__ISSUER=${{ vars.ISSUER }}
-              Jwt__AUDIENCE=${{ vars.AUDIENCE }}
+              SERVER_KEY=${{ vars.SERVER_KEY }}
+              HASH_SALT=${{ vars.HASH_SALT }}
+              ISSUER=${{ vars.ISSUER }}
+              AUDIENCE=${{ vars.AUDIENCE }}
               CONNECTION_STRING=${{ vars.CONNECTION_STRING }}
               RABBITMQ_USERNAME=${{ vars.RABBITMQ_USERNAME }}
               RABBITMQ_PASSWORD=${{ vars.RABBITMQ_PASSWORD }}
