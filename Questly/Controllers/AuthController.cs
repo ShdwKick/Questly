@@ -31,6 +31,24 @@ public class AuthController(
         var tokenPair = await userService.LoginUser(loginRequest.Login, loginRequest.Password, userAgent, ip);
         return Ok(tokenPair);
     }
+    
+    
+    /// <summary>
+    /// Регистрация нового пользователя
+    /// </summary>
+    [HttpPost("user_create")]
+    public async Task<ActionResult<TokenPair>> RegisterUser([FromBody] UserForCreate userForCreate)
+    {
+        userForCreate.RequiredNotNull();
+
+        var httpContext = httpContextAccessor.HttpContext;
+        var userAgent = httpContext?.Request.Headers.UserAgent.ToString() ?? "Unknown";
+        var ip = httpContext?.Connection?.RemoteIpAddress?.ToString() ?? "Unknown";
+
+        logger.LogInformation($"Registration attempt for user: {userForCreate.Username}");
+        var tokenPair = await userService.CreateUserAsync(userForCreate, userAgent, ip);
+        return CreatedAtAction(nameof(RegisterUser), new { username = userForCreate.Username }, tokenPair);
+    }
 
     /// <summary>
     /// Обновление access токена с использованием refresh токена
