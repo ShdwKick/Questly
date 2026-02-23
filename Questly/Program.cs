@@ -21,7 +21,7 @@ public static class Program
         // Конфигурация и регистрация сервисов через extension-методы
         builder.Services.AddQuestlyConfiguration(builder.Configuration);
         builder.Services.AddQuestlyServices();
-        builder.Services.AddQuestlyAuthentication(builder.Configuration);
+        //builder.Services.AddQuestlyAuthentication(builder.Configuration);
             
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen();
