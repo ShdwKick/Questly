@@ -109,6 +109,9 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             cd /root/QuestlyCompose
+
+            mkdir -p /root/QuestlyCompose/pgdata/18/docker
+            chown -R 999:999 /root/QuestlyCompose/pgdata
       
             cat > .env <<EOF
               POSTGRES_USER=${{ vars.POSTGRES_USER }}
