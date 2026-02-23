@@ -1,10 +1,9 @@
 ﻿using DataModels;
 
-namespace Questly.Services
+namespace Questly.Services;
+
+public interface IAuthorizationService
 {
-    public interface IAuthorizationService
-    {
-        Task<TokenPair> RefreshTokens(string refreshToken, string userAgent, string ip);
-        Task<string> RefreshAccessToken(string refreshToken);
-    }
+    Task<TokenPair> RefreshTokens(string refreshToken, string userAgent, string ip);
+    Task<string> RefreshAccessToken(string refreshToken);
 }

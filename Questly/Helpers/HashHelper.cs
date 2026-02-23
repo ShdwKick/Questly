@@ -8,7 +8,7 @@ public class HashHelper : BaseHelper
 {
     public static string GenerateSalt(int size = 16)
     {
-        byte[] saltBytes = new byte[size];
+        var saltBytes = new byte[size];
         using var rng = RandomNumberGenerator.Create();
         rng.GetBytes(saltBytes);
         return Convert.ToBase64String(saltBytes);
@@ -20,9 +20,9 @@ public class HashHelper : BaseHelper
             throw new ArgumentNullException(nameof(input));
         if (string.IsNullOrWhiteSpace(salt))
             throw new ArgumentNullException(nameof(salt));
-        using SHA256 sha256 = SHA256.Create();
-        byte[] inputBytes = Encoding.UTF8.GetBytes(input + salt);
-        byte[] hashBytes = sha256.ComputeHash(inputBytes);
+        using var sha256 = SHA256.Create();
+        var inputBytes = Encoding.UTF8.GetBytes(input + salt);
+        var hashBytes = sha256.ComputeHash(inputBytes);
         return Convert.ToHexString(hashBytes).ToLowerInvariant();
     }
     
@@ -30,9 +30,9 @@ public class HashHelper : BaseHelper
     {
         if (string.IsNullOrWhiteSpace(input))
             throw new ArgumentNullException(nameof(input));
-        using SHA256 sha256 = SHA256.Create();
-        byte[] inputBytes = Encoding.UTF8.GetBytes(input);
-        byte[] hashBytes = sha256.ComputeHash(inputBytes);
+        using var sha256 = SHA256.Create();
+        var inputBytes = Encoding.UTF8.GetBytes(input);
+        var hashBytes = sha256.ComputeHash(inputBytes);
         return Convert.ToHexString(hashBytes).ToLowerInvariant();
     }
 }

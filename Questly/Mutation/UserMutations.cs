@@ -1,6 +1,4 @@
 ﻿using DataModels;
-using HotChocolate;
-using HotChocolate.Types;
 using Questly.Repositories;
 using Questly.Services;
 

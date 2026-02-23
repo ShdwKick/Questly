@@ -3,137 +3,134 @@ using DataModels;
 using DataModels.Helpers;
 using Microsoft.EntityFrameworkCore;
 using Questly.DataBase;
-using Questly.Helpers;
-using Questly.Services;
 
-namespace Questly.Repositories
+namespace Questly.Repositories;
+
+public class UserRepository : IUserRepository
 {
-    public class UserRepository : IUserRepository
+    private readonly DatabaseContext _databaseConnection;
+    private readonly ILogger<UserRepository> _logger;
+    private readonly ITokenHelper _tokenHelper;
+
+    public UserRepository(DatabaseContext databaseConnection, ILogger<UserRepository> logger, ITokenHelper tokenHelper)
     {
-        private readonly DatabaseContext _databaseConnection;
-        private readonly ILogger<UserRepository> _logger;
-        private readonly ITokenHelper _tokenHelper;
+        _databaseConnection = databaseConnection;
+        _logger = logger;
+        _tokenHelper = tokenHelper;
+    }
 
-        public UserRepository(DatabaseContext databaseConnection, ILogger<UserRepository> logger, ITokenHelper tokenHelper)
+    public async Task<User> GetUserByIdAsync(Guid userId)
+    {
+        var user = await _databaseConnection.Users
+            .FirstOrDefaultAsync(q => q.Id == userId);
+
+        if (user == null)
+            throw new GraphQLException(
+                ErrorBuilder.New()
+                    .SetMessage($"User with id {userId} not found")
+                    .SetCode("USER_NOT_FOUND")
+                    .Build());
+
+        return user;
+    }
+
+    public async Task<bool> DoesUserExistAsync(string name)
+    {
+        return await _databaseConnection.Users.AnyAsync(q => q.Username.Equals(name));
+    }
+
+    public async Task<bool> DoesUserExistAsync(Guid userId)
+    {
+        return await _databaseConnection.Users.AnyAsync(q => q.Id == userId);
+    }
+
+    public async Task<TokenPair> LoginUserAsync(string username, string password, string userAgent, string ip)
+    {
+        var user = await _databaseConnection.Users.FirstOrDefaultAsync(q => q.Username == username);
+        if (user == null || user.PasswordHash != HashHelper.ComputeHash(password, user.Salt))
+            throw new GraphQLException(
+                ErrorBuilder.New()
+                    .SetMessage($"Invalid username or password")
+                    .SetCode("INVALID_USER_CREDENTIALS")
+                    .Build());
+
+        var existingSession = await _databaseConnection.RefreshSessions
+            .FirstOrDefaultAsync(s =>
+                s.UserId == user.Id &&
+                s.UserAgent == userAgent &&
+                s.RevokedAt == null &&
+                s.ExpiresAt > DateTime.UtcNow);
+
+        if (existingSession != null)
         {
-            _databaseConnection = databaseConnection;
-            _logger = logger;
-            _tokenHelper = tokenHelper;
-        }
-
-        public async Task<User> GetUserByIdAsync(Guid userId)
-        {
-            var user = await _databaseConnection.Users
-                .FirstOrDefaultAsync(q => q.Id == userId);
-
-            if (user == null)
-                throw new GraphQLException(
-                    ErrorBuilder.New()
-                        .SetMessage($"User with id {userId} not found")
-                        .SetCode("USER_NOT_FOUND")
-                        .Build());
-
-            return user;
-        }
-
-        public async Task<bool> DoesUserExistAsync(string name)
-        {
-            return await _databaseConnection.Users.AnyAsync(q => q.Username.Equals(name));
-        }
-
-        public async Task<bool> DoesUserExistAsync(Guid userId)
-        {
-            return await _databaseConnection.Users.AnyAsync(q => q.Id == userId);
-        }
-
-        public async Task<TokenPair> LoginUserAsync(string username, string password, string userAgent, string ip)
-        {
-            var user = await _databaseConnection.Users.FirstOrDefaultAsync(q => q.Username == username);
-            if (user == null || user.PasswordHash != HashHelper.ComputeHash(password, user.Salt))
-                throw new GraphQLException(
-                    ErrorBuilder.New()
-                        .SetMessage($"Invalid username or password")
-                        .SetCode("INVALID_USER_CREDENTIALS")
-                        .Build());
-
-            var existingSession = await _databaseConnection.RefreshSessions
-                .FirstOrDefaultAsync(s =>
-                    s.UserId == user.Id &&
-                    s.UserAgent == userAgent &&
-                    s.RevokedAt == null &&
-                    s.ExpiresAt > DateTime.UtcNow);
-
-            if (existingSession != null)
-            {
-                var jti = Guid.NewGuid().ToString();
-                var accessToken = new JwtSecurityTokenHandler().WriteToken(
-                    _tokenHelper.GenerateAccessToken(user.Id.ToString(), jti));
-
-                return new TokenPair(accessToken, null);
-            }
-
-            var jtiNew = Guid.NewGuid().ToString();
-            var tokens = _tokenHelper.GenerateTokens(user, jtiNew);
-
-            var session = new RefreshSession
-            {
-                Id = Guid.NewGuid(),
-                UserId = user.Id,
-                RefreshTokenHash = HashHelper.ComputeHash(tokens.RefreshToken),
-                UserAgent = userAgent,
-                IpAddress = ip,
-                CreatedAt = DateTime.UtcNow,
-                ExpiresAt = DateTime.UtcNow.AddDays(30)
-            };
-
-            _databaseConnection.RefreshSessions.Add(session);
-            await _databaseConnection.SaveChangesAsync();
-
-            return tokens;
-        }
-
-
-        public async Task<TokenPair> CreateUserAsync(UserForCreate ufc, string userAgent, string ip)
-        {
-            var user = new User()
-            {
-                Id = Guid.NewGuid(),
-                Username = ufc.Username,
-                Email = ufc.Email,
-                CreatedAt = DateTime.UtcNow,
-                Salt = HashHelper.GenerateSalt()
-            };
-            user.PasswordHash = HashHelper.ComputeHash(ufc.Password + user.Salt);
-
             var jti = Guid.NewGuid().ToString();
-            var tokens = _tokenHelper.GenerateTokens(user, jti);
+            var accessToken = new JwtSecurityTokenHandler().WriteToken(
+                _tokenHelper.GenerateAccessToken(user.Id.ToString(), jti));
 
-            var session = new RefreshSession
-            {
-                Id = Guid.NewGuid(),
-                UserId = user.Id,
-                RefreshTokenHash = HashHelper.ComputeHash(tokens.RefreshToken),
-                UserAgent = userAgent,
-                IpAddress = ip,
-                CreatedAt = DateTime.UtcNow,
-                ExpiresAt = DateTime.UtcNow.AddDays(30)
-            };
-            _databaseConnection.Users.Add(user);
-            _databaseConnection.RefreshSessions.Add(session);
-            await _databaseConnection.SaveChangesAsync();
+            return new TokenPair(accessToken, null);
+        }
 
-            return tokens;
-        }
-        
-        public async Task DropAllUsers()
+        var jtiNew = Guid.NewGuid().ToString();
+        var tokens = _tokenHelper.GenerateTokens(user, jtiNew);
+
+        var session = new RefreshSession
         {
-            await _databaseConnection.Users.ExecuteDeleteAsync();
-            await _databaseConnection.SaveChangesAsync();
-        }
-        
-        public IQueryable<User> GetAllUsers()
+            Id = Guid.NewGuid(),
+            UserId = user.Id,
+            RefreshTokenHash = HashHelper.ComputeHash(tokens.RefreshToken),
+            UserAgent = userAgent,
+            IpAddress = ip,
+            CreatedAt = DateTime.UtcNow,
+            ExpiresAt = DateTime.UtcNow.AddDays(30)
+        };
+
+        _databaseConnection.RefreshSessions.Add(session);
+        await _databaseConnection.SaveChangesAsync();
+
+        return tokens;
+    }
+
+
+    public async Task<TokenPair> CreateUserAsync(UserForCreate ufc, string userAgent, string ip)
+    {
+        var user = new User()
         {
-            return _databaseConnection.Users.AsQueryable();
-        }
+            Id = Guid.NewGuid(),
+            Username = ufc.Username,
+            Email = ufc.Email,
+            CreatedAt = DateTime.UtcNow,
+            Salt = HashHelper.GenerateSalt()
+        };
+        user.PasswordHash = HashHelper.ComputeHash(ufc.Password + user.Salt);
+
+        var jti = Guid.NewGuid().ToString();
+        var tokens = _tokenHelper.GenerateTokens(user, jti);
+
+        var session = new RefreshSession
+        {
+            Id = Guid.NewGuid(),
+            UserId = user.Id,
+            RefreshTokenHash = HashHelper.ComputeHash(tokens.RefreshToken),
+            UserAgent = userAgent,
+            IpAddress = ip,
+            CreatedAt = DateTime.UtcNow,
+            ExpiresAt = DateTime.UtcNow.AddDays(30)
+        };
+        _databaseConnection.Users.Add(user);
+        _databaseConnection.RefreshSessions.Add(session);
+        await _databaseConnection.SaveChangesAsync();
+
+        return tokens;
+    }
+        
+    public async Task DropAllUsers()
+    {
+        await _databaseConnection.Users.ExecuteDeleteAsync();
+        await _databaseConnection.SaveChangesAsync();
+    }
+        
+    public IQueryable<User> GetAllUsers()
+    {
+        return _databaseConnection.Users.AsQueryable();
     }
 }

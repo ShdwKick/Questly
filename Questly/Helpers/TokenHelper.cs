@@ -4,24 +4,16 @@ using System.Security.Cryptography;
 using System.Text;
 using DataModels;
 using DataModels.Helpers;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 
 namespace Questly.Helpers;
 
-public class TokenHelper : ITokenHelper
+public class TokenHelper(IConfigurationHelper configuration, IHttpContextAccessor httpContextAccessor)
+    : ITokenHelper
 {
-    private readonly IConfigurationHelper _configuration;
-    private readonly IHttpContextAccessor _httpContextAccessor;
-
-    public TokenHelper(IConfigurationHelper configuration)
-    {
-        _configuration = configuration;
-    }
     public string GetTokenFromHeader()
     {
-        var httpContext = _httpContextAccessor.HttpContext;
+        var httpContext = httpContextAccessor.HttpContext;
         string authorizationHeader = httpContext.Request.Headers["Authorization"];
 
         if (string.IsNullOrEmpty(authorizationHeader) || !authorizationHeader.StartsWith("Bearer "))
@@ -41,7 +33,7 @@ public class TokenHelper : ITokenHelper
     
     public JwtSecurityToken GenerateAccessToken(string userId, string jti)
     {
-        var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration.GetServerKey()));
+        var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration.GetServerKey()));
         var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
 
         var claims = new[]
@@ -52,8 +44,8 @@ public class TokenHelper : ITokenHelper
         };
 
         return new JwtSecurityToken(
-            issuer: _configuration.GetIssuer(),
-            audience: _configuration.GetAudience(),
+            issuer: configuration.GetIssuer(),
+            audience: configuration.GetAudience(),
             claims: claims,
             expires: DateTime.UtcNow.AddMinutes(15),
             signingCredentials: credentials

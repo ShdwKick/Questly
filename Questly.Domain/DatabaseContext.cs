@@ -1,30 +1,20 @@
-﻿using DataModels.DTOs;
-
-namespace DataModels;
+﻿namespace DataModels;
 using Microsoft.EntityFrameworkCore;
-using Npgsql;
 
-public class DatabaseContext : DbContext
+public class DatabaseContext(DbContextOptions<DatabaseContext> options) : DbContext(options)
 {
-    public DbSet<User> Users { get; set; }
-    public DbSet<UserAchievement> UserAchievements { get; set; }
-    public DbSet<City> Cities { get; set; }
-    public DbSet<Achievement> Achievements { get; set; }
-    public DbSet<AchievementCategory> AchievementCategories { get; set; }
+    public DbSet<User> Users { get; init; }
+    public DbSet<UserAchievement> UserAchievements { get; init; }
+    public DbSet<City> Cities { get; init; }
+    public DbSet<Achievement> Achievements { get; init; }
+    public DbSet<AchievementCategory> AchievementCategories { get; init; }
     public DbSet<Place> Places { get; set; }
     public DbSet<PlaceType> PlaceTypes { get; set; }
-    public DbSet<Leaderboard> Leaderboard { get; set; }
-    public DbSet<Partner> Partners { get; set; }
-    public DbSet<BlockUser> BlockUserHistory { get; set; }
-    public DbSet<RefreshSession> RefreshSessions { get; set; }
-        
-    private readonly string _connectionString;
-    
-    public DatabaseContext(DbContextOptions<DatabaseContext> options)
-        : base(options)
-    {
-    }
-    
+    public DbSet<Leaderboard> Leaderboard { get; init; }
+    public DbSet<Partner> Partners { get; init; }
+    public DbSet<BlockUser> BlockUserHistory { get; init; }
+    public DbSet<RefreshSession> RefreshSessions { get; init; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         // User

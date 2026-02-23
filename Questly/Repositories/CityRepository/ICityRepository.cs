@@ -1,14 +1,13 @@
 ﻿using DataModels;
 
-namespace Questly.Repositories
+namespace Questly.Repositories;
+
+public interface ICityRepository
 {
-    public interface ICityRepository
-    {
-        Task<bool> DoesCityExist(string name);
+    Task<bool> DoesCityExist(string name);
     
-        Task<bool> DoesCityExist(Guid cityId);
+    Task<bool> DoesCityExist(Guid cityId);
     
-        Task<List<City>> GetCitiesList();
-        Task<City> GetCityInfo(Guid cityId);
-    }
+    Task<List<City>> GetCitiesList();
+    Task<City> GetCityInfo(Guid cityId);
 }

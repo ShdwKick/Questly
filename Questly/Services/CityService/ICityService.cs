@@ -1,10 +1,9 @@
 ﻿using DataModels;
 
-namespace Questly.Services
+namespace Questly.Services;
+
+public interface ICityService
 {
-    public interface ICityService
-    {
-        Task<List<City>> GetCitiesList();
-        Task<City> GetCityInfo(Guid cityId);
-    }
+    Task<List<City>> GetCitiesList();
+    Task<City> GetCityInfo(Guid cityId);
 }

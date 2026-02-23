@@ -1,77 +1,75 @@
 ﻿using System.Text;
 using System.Text.Json;
 using DataModels.Helpers;
-using Questly.Helpers;
 using RabbitMQ.Client;
 
-namespace Questly.Services
+namespace Questly.Services;
+
+public class RabbitService : IRabbitService
 {
-    public class RabbitService : IRabbitService
+    private IConnectionFactory _factory;
+    private IConnection _connection;
+    private IChannel _channel;
+
+    private readonly string _exchangeName;
+    private readonly string _recoveryRoutingKeyName;
+    private readonly string _confirmationRoutingKeyName;
+    private readonly string _inviteRoutingKeyName;
+
+    public RabbitService(IConfigurationHelper configurationHelper)
     {
-        private IConnectionFactory _factory;
-        private IConnection _connection;
-        private IChannel _channel;
-
-        private readonly string _exchangeName;
-        private readonly string _recoveryRoutingKeyName;
-        private readonly string _confirmationRoutingKeyName;
-        private readonly string _inviteRoutingKeyName;
-
-        public RabbitService(IConfigurationHelper configurationHelper)
+        _factory = new ConnectionFactory()
         {
-            _factory = new ConnectionFactory()
-            {
-                HostName = configurationHelper.GetRabbitHostName(),
-                UserName = configurationHelper.GetRabbitUserName(),
-                Password = configurationHelper.GetRabbitPassword(),
-            };
-            _exchangeName = "emailExchange";
-            _recoveryRoutingKeyName = "email.recovery";
-            _confirmationRoutingKeyName = "email.confirmation";
-            _inviteRoutingKeyName = "email.invite";
-        }
+            HostName = configurationHelper.GetRabbitHostName(),
+            UserName = configurationHelper.GetRabbitUserName(),
+            Password = configurationHelper.GetRabbitPassword(),
+        };
+        _exchangeName = "emailExchange";
+        _recoveryRoutingKeyName = "email.recovery";
+        _confirmationRoutingKeyName = "email.confirmation";
+        _inviteRoutingKeyName = "email.invite";
+    }
 
-        public async Task InitializeServiceAsync()
+    public async Task InitializeServiceAsync()
+    {
+        _connection = await _factory.CreateConnectionAsync();
+        _channel = await _connection.CreateChannelAsync();
+
+        await _channel.ExchangeDeclareAsync(exchange: _exchangeName, type: ExchangeType.Direct);
+        await _channel.QueueDeclareAsync(queue: _recoveryRoutingKeyName, durable: true, exclusive: false,
+            autoDelete: false);
+        await _channel.QueueDeclareAsync(queue: _confirmationRoutingKeyName, durable: true, exclusive: false,
+            autoDelete: false);
+        await _channel.QueueDeclareAsync(queue: _inviteRoutingKeyName, durable: true, exclusive: false,
+            autoDelete: false);
+
+        await _channel.QueueBindAsync(_recoveryRoutingKeyName, _exchangeName, _recoveryRoutingKeyName);
+        await _channel.QueueBindAsync(_confirmationRoutingKeyName, _exchangeName, _confirmationRoutingKeyName);
+        await _channel.QueueBindAsync(_inviteRoutingKeyName, _exchangeName, _inviteRoutingKeyName);
+    }
+
+    public async Task PublishMessageAsync(string messageType, object message)
+    {
+        var routingKey = messageType switch
         {
-            _connection = await _factory.CreateConnectionAsync();
-            _channel = await _connection.CreateChannelAsync();
+            "Confirmation" => _confirmationRoutingKeyName,
+            "Recovery" => _recoveryRoutingKeyName,
+            "Invite" => _inviteRoutingKeyName,
+            _ => throw new ArgumentException("Unknown message type")
+        };
 
-            await _channel.ExchangeDeclareAsync(exchange: _exchangeName, type: ExchangeType.Direct);
-            await _channel.QueueDeclareAsync(queue: _recoveryRoutingKeyName, durable: true, exclusive: false,
-                autoDelete: false);
-            await _channel.QueueDeclareAsync(queue: _confirmationRoutingKeyName, durable: true, exclusive: false,
-                autoDelete: false);
-            await _channel.QueueDeclareAsync(queue: _inviteRoutingKeyName, durable: true, exclusive: false,
-                autoDelete: false);
-
-            await _channel.QueueBindAsync(_recoveryRoutingKeyName, _exchangeName, _recoveryRoutingKeyName);
-            await _channel.QueueBindAsync(_confirmationRoutingKeyName, _exchangeName, _confirmationRoutingKeyName);
-            await _channel.QueueBindAsync(_inviteRoutingKeyName, _exchangeName, _inviteRoutingKeyName);
-        }
-
-        public async Task PublishMessageAsync(string messageType, object message)
+        var props = new BasicProperties
         {
-            var routingKey = messageType switch
-            {
-                "Confirmation" => _confirmationRoutingKeyName,
-                "Recovery" => _recoveryRoutingKeyName,
-                "Invite" => _inviteRoutingKeyName,
-                _ => throw new ArgumentException("Unknown message type")
-            };
+            ContentType = "application/json",
+            DeliveryMode = DeliveryModes.Persistent
+        };
 
-            var props = new BasicProperties
-            {
-                ContentType = "application/json",
-                DeliveryMode = DeliveryModes.Persistent
-            };
+        var body = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(new
+        {
+            Type = messageType,
+            Payload = message
+        }));
 
-            var body = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(new
-            {
-                Type = messageType,
-                Payload = message
-            }));
-
-            await _channel.BasicPublishAsync(_exchangeName, routingKey, false, props, body);
-        }
+        await _channel.BasicPublishAsync(_exchangeName, routingKey, false, props, body);
     }
 }

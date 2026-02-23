@@ -1,19 +1,16 @@
-﻿using HotChocolate;
+﻿namespace Questly.Queries;
 
-namespace Questly.Queries
+public class Query
 {
-    public class Query
+    [GraphQLDescription("Получить серверное время")]
+    public DateTime GetServerCurrentDateTime()
     {
-        [GraphQLDescription("Получить серверное время")]
-        public DateTime GetServerCurrentDateTime()
-        {
-            return DateTime.Now;
-        }
+        return DateTime.Now;
+    }
 
-        [GraphQLDescription("Получить серверное время по UTC")]
-        public DateTime GetServerCurrentUTCDateTime()
-        {
-            return DateTime.UtcNow;
-        }
+    [GraphQLDescription("Получить серверное время по UTC")]
+    public DateTime GetServerCurrentUTCDateTime()
+    {
+        return DateTime.UtcNow;
     }
 }
