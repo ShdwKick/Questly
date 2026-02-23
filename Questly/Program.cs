@@ -36,9 +36,6 @@ public static class Program
             });
         });
 
-        // Дополнительные настройки хоста
-        builder.WebHost.UseUrls("http://0.0.0.0:5000", "http://localhost:5000");
-
         var app = builder.Build();
             
         if (app.Environment.IsDevelopment())
