@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using HotChocolate;
+using System.Text.Json.Serialization;
 
 namespace DataModels;
 
@@ -22,8 +22,8 @@ public class User
 
     [Required]
     [MaxLength(256)]
+    [JsonIgnore]
     [Column("c_password_hash")]
-    [GraphQLIgnore]
     public string PasswordHash { get; set; }
 
     [Column("c_created_at")]
@@ -43,7 +43,7 @@ public class User
     [Column("b_admin")]
     public bool IsAdmin { get; set; }
     
-    [GraphQLIgnore]
     [Column("c_salt")]
+    [JsonIgnore]
     public string Salt { get; set; }
 }

@@ -1,4 +1,5 @@
-﻿using Questly.Extensions;
+﻿using Questly.Exceptions;
+using Questly.Extensions;
 using Questly.Middlewares;
 
 namespace Questly;
@@ -11,6 +12,11 @@ public static class Program
 
         builder.Configuration
             .AddEnvironmentVariables();
+        
+        builder.Services.AddControllers(options =>
+        {
+            options.Filters.Add<HttpResponseExceptionFilter>();
+        });
             
         if (!string.IsNullOrEmpty(builder.Configuration["CONNECTION_STRING"]))
         {

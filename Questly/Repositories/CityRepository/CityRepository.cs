@@ -31,11 +31,7 @@ public class CityRepository : ICityRepository
     {
         var city = await _databaseConnection.Cities.FirstOrDefaultAsync(q=>q.Id == cityId);
         if(city == null)
-            throw new GraphQLException(
-                ErrorBuilder.New()
-                    .SetMessage($"City with id:{cityId} not found")
-                    .SetCode("CITY_NOT_FOUND")
-                    .Build());
+            throw new KeyNotFoundException($"City with ID {cityId} not found");
         
         return city;
     }

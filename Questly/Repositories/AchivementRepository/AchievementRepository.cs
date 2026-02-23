@@ -16,11 +16,7 @@ public class AchievementRepository : IAchievementRepository
     {
         var achievement = await _databaseConnection.Achievements.FirstOrDefaultAsync(q => q.Id == achId);
         if (achievement == null)
-            throw new GraphQLException(
-                ErrorBuilder.New()
-                    .SetMessage($"Achievement with id {achId} not found")
-                    .SetCode("ACHIEVEMENT_NOT_FOUND")
-                    .Build());
+            throw new KeyNotFoundException($"Achievement with ID {achId} not found");
 
         return achievement;
     }

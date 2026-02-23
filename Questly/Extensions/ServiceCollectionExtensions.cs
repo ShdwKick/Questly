@@ -6,8 +6,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Questly.Helpers;
 using Questly.Infrastructure.Helpers;
-using Questly.Mutations;
-using Questly.Queries;
 using Questly.Repositories;
 using Questly.Services;
 
@@ -43,13 +41,6 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ICityRepository, CityRepository>();
         services.AddScoped<IAchievementRepository, AchievementRepository>();
         services.AddScoped<IAuthorizationRepository, AuthorizationRepository>();
-
-        services.AddScoped<Mutation>();
-        services.AddScoped<Query>();
-        services.AddScoped<UserQueries>();
-        services.AddScoped<AchievementQuery>();
-        services.AddScoped<CityQuery>();
-        services.AddScoped<UserMutations>();
 
         services.AddHttpClient();
         services.AddHttpContextAccessor();
@@ -105,23 +96,5 @@ public static class ServiceCollectionExtensions
                     OnAuthenticationFailed = _ => Task.CompletedTask
                 };
             });
-    }
-
-    [Obsolete("GraphQL был заменен на REST API. Этот метод больше не используется.")]
-    public static IServiceCollection AddQuestlyGraphQl(this IServiceCollection services)
-    {
-        services.AddGraphQLServer()
-            .ModifyRequestOptions(o => o.ExecutionTimeout = TimeSpan.FromSeconds(60))
-            .AddQueryType<Query>()
-            .AddTypeExtension<UserQueries>()
-            .AddTypeExtension<AchievementQuery>()
-            .AddTypeExtension<CityQuery>()
-            .AddMutationType<Mutation>()
-            .AddTypeExtension<UserMutations>()
-            .AddInMemorySubscriptions()
-            .AddAuthorization()
-            .AddFiltering();
-
-        return services;
     }
 }
