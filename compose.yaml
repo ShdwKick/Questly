@@ -35,23 +35,5 @@
       postgres:
         condition: service_healthy
 
-  questly-admin:
-    container_name: questly-admin-app
-    image: shadowkick/questly-admin:latest
-    environment:
-      SERVER_KEY: ${SERVER_KEY}
-      HASH_SALT: ${HASH_SALT}
-      ISSUER: ${ISSUER}
-      AUDIENCE: ${AUDIENCE}
-      CONNECTION_STRING: ${CONNECTION_STRING}
-      RABBITMQ_HOSTNAME: ${RABBITMQ_HOSTNAME}
-      RABBITMQ_USERNAME: ${RABBITMQ_USERNAME}
-      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
-    ports:
-      - "5051:5000"
-    depends_on:
-      postgres:
-        condition: service_healthy
-
 volumes:
   pgdata:
