@@ -4,11 +4,13 @@ namespace Questly.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class ServerController : ControllerBase
+public class ServerController(
+    ILogger<AuthController> logger) : ControllerBase
 {
     [HttpGet("datetime")]
     public ActionResult<DateTime> GetDateTime()
     {
+        logger.LogError("TestError");
         return Ok(DateTime.Now);
     }
 
