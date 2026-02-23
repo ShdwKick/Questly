@@ -48,9 +48,6 @@ jobs:
           dotnet-version: 9.0.x
 
       - name: 🧪 Start SonarCloud analysis
-        # Sonar AI Code Assurance is a verification process for detecting AI-generated code
-        # and then running it through a structured and comprehensive analysis.
-        # This ensures all new code meets the highest standards of quality and security.
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: |
@@ -96,6 +93,7 @@ jobs:
       - name: 🚀 Push Questly image
         run: docker push ${{ vars.QUESTLY_IMAGE }}:latest
 
+  # Job для деплоя на сервер
   deploy:
     runs-on: ubuntu-latest
     environment: env
@@ -109,96 +107,46 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             cd /root/QuestlyCompose
-
+            
+            # Создаем структуру каталогов для PostgreSQL 18+
             mkdir -p /root/QuestlyCompose/pgdata/18/docker
             chown -R 999:999 /root/QuestlyCompose/pgdata
-      
+            
+            # Генерируем файл .env
             cat > .env <<EOF
-              POSTGRES_USER=${{ vars.POSTGRES_USER }}
-              POSTGRES_PASSWORD=${{ vars.POSTGRES_PASSWORD }}
-              POSTGRES_DB=${{ vars.POSTGRES_DB }}
-              SERVER_KEY=${{ vars.SERVER_KEY }}
-              HASH_SALT=${{ vars.HASH_SALT }}
-              ISSUER=${{ vars.ISSUER }}
-              AUDIENCE=${{ vars.AUDIENCE }}
-              CONNECTION_STRING=${{ vars.CONNECTION_STRING }}
-              RABBITMQ_USERNAME=${{ vars.RABBITMQ_USERNAME }}
-              RABBITMQ_PASSWORD=${{ vars.RABBITMQ_PASSWORD }}
-              RABBITMQ_HOSTNAME=${{ vars.RABBITMQ_HOSTNAME }}
+            POSTGRES_USER=${{ vars.POSTGRES_USER }}
+            POSTGRES_PASSWORD=${{ vars.POSTGRES_PASSWORD }}
+            POSTGRES_DB=${{ vars.POSTGRES_DB }}
+            SERVER_KEY=${{ vars.SERVER_KEY }}
+            HASH_SALT=${{ vars.HASH_SALT }}
+            ISSUER=${{ vars.ISSUER }}
+            AUDIENCE=${{ vars.AUDIENCE }}
+            CONNECTION_STRING=${{ vars.CONNECTION_STRING }}
+            RABBITMQ_USERNAME=${{ vars.RABBITMQ_USERNAME }}
+            RABBITMQ_PASSWORD=${{ vars.RABBITMQ_PASSWORD }}
+            RABBITMQ_HOSTNAME=${{ vars.RABBITMQ_HOSTNAME }}
             EOF
-
-            echo "=== Содержимое файла .env ==="
-            cat .env
-            echo "=========================="
             
-            echo "=== 1. Проверка состояния системы ==="
-            echo "Свободная память:"
-            free -h
-            echo -e "\nДисковое пространство:"
-            df -h /
-            echo -e "\nПроцессы, использующие много памяти:"
-            ps -eo pid,ppid,cmd,%mem,%cpu --sort=-%mem | head -n 10
-            
-            echo -e "\n=== 2. Остановка существующих контейнеров ==="
+            # Останавливаем текущие контейнеры
             docker compose down --remove-orphans || true
             
-            echo -e "\n=== 3. Проверка порта 5432 ==="
-            if sudo ss -tulpn | grep ':5432'; then
-              echo "ПРЕДУПРЕЖДЕНИЕ: Порт 5432 уже занят!"
-              echo "Завершаем процесс, занимающий порт 5432..."
-              sudo ss -tulpn | grep ':5432' | awk '{print $7}' | cut -d',' -f1 | xargs kill -9 || true
-            else
-              echo "Порт 5432 свободен"
-            fi
+            # Обновляем образы с Docker Hub
+            echo "=== Обновление образов с Docker Hub ==="
+            docker compose pull
             
-            echo -e "\n=== 4. Запуск контейнеров ==="
+            # Запускаем контейнеры
+            echo "=== Запуск контейнеров ==="
             docker compose up -d --build
             
-            echo -e "\n=== 5. Проверка статуса контейнеров ==="
+            # Проверяем статус контейнеров
+            echo "=== Проверка статуса контейнеров ==="
             docker ps -a
             
-            echo -e "\n=== 6. Проверка логов PostgreSQL ==="
-            if docker inspect questly-postgres &> /dev/null; then
-              docker logs questly-postgres || echo "Логи PostgreSQL недоступны"
-              
-              # Если контейнер упал, попробуем запустить его вручную для получения детальных логов
-              if [ "$(docker inspect questly-postgres --format='{{.State.Status}}')" != "running" ]; then
-                echo -e "\n=== 7. Попытка запуска PostgreSQL вручную для диагностики ==="
-                docker rm -f questly-postgres || true
-                docker run --name postgres-debug \
-                  -e POSTGRES_USER=${{ vars.POSTGRES_USER }} \
-                  -e POSTGRES_PASSWORD=${{ vars.POSTGRES_PASSWORD }} \
-                  -e POSTGRES_DB=${{ vars.POSTGRES_DB }} \
-                  -e POSTGRES_SHARED_BUFFERS=64MB \
-                  -e POSTGRES_EFFECTIVE_CACHE_SIZE=128MB \
-                  -e POSTGRES_WORK_MEM=4MB \
-                  -e POSTGRES_MAINTENANCE_WORK_MEM=32MB \
-                  -e POSTGRES_MAX_CONNECTIONS=20 \
-                  -v pgdata:/var/lib/postgresql/data \
-                  postgres:latest
-              fi
-            else
-              echo "Контейнер questly-postgres не существует"
-            fi
-            
-            echo -e "\n=== 8. Проверка состояния volume pgdata ==="
-            if [ -d "/var/lib/docker/volumes/questlycompose_pgdata/_data" ]; then
-              echo "Содержимое volume pgdata:"
-              ls -la /var/lib/docker/volumes/questlycompose_pgdata/_data
-            else
-              echo "Volume pgdata не найден в стандартном расположении"
-            fi
-            
-            # Проверяем, запущен ли questly-app
+            # Проверяем, что приложение запущено
             if ! docker inspect questly-app &> /dev/null || [ "$(docker inspect questly-app --format='{{.State.Status}}')" != "running" ]; then
-              echo -e "\n=== 9. Логи questly-app ==="
-              docker logs questly-app || echo "Логи questly-app недоступны"
-            fi
-            
-            # Если PostgreSQL не запущен, завершаем с ошибкой
-            if ! docker inspect questly-postgres &> /dev/null || [ "$(docker inspect questly-postgres --format='{{.State.Status}}')" != "running" ]; then
-              echo -e "\n❌ ОШИБКА: PostgreSQL не запустился. См. логи выше для диагностики."
+              echo "❌ ОШИБКА: Приложение questly-app не запущено"
+              docker logs questly-app || echo "Логи недоступны"
               exit 1
             fi
             
-            echo -e "\n✅ Все сервисы успешно запущены!"
+            echo "✅ Все сервисы успешно запущены!"
