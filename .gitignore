@@ -47,7 +47,5 @@ packages/
 
 # Others
 ReSharper.*
-Questly/appsettings.json
-Questly/appsettings.Development.json
 token_test_output.txt
 test_output.txt
