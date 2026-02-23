@@ -1,6 +1,10 @@
-﻿using Questly.Exceptions;
+﻿using Elastic.Clients.Elasticsearch;
+using Elastic.Serilog.Sinks;
+using Questly.Exceptions;
 using Questly.Extensions;
 using Questly.Middlewares;
+using Serilog;
+using DataStreamName = Elastic.Ingest.Elasticsearch.DataStreams.DataStreamName;
 
 namespace Questly;
 
@@ -23,6 +27,22 @@ public static class Program
             builder.Configuration["ConnectionStrings:Default"] = 
                 builder.Configuration["CONNECTION_STRING"];
         }
+        
+        Log.Logger = new LoggerConfiguration()
+            .Enrich.FromLogContext()
+            .Enrich.WithEnvironmentName()
+            .Enrich.WithThreadId()
+            .WriteTo.Console()
+            .WriteTo.Elasticsearch(
+                new[] { new Uri("http://localhost:9200") },
+                opts =>
+                {
+                    opts.DataStream = new DataStreamName("logs-myapp-development");
+                })
+            .CreateLogger();
+
+        builder.Host.UseSerilog();
+
 
         // Конфигурация и регистрация сервисов через extension-методы
         builder.Services.AddQuestlyConfiguration(builder.Configuration);
