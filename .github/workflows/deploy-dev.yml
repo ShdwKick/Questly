@@ -5,17 +5,11 @@ on:
     branches: [ "main" ]
 
 jobs:
-  build:
-    strategy:
-      fail-fast: true
-      matrix:
-        configuration: [Debug]
-
+  # Job для сборки и анализа кода
+  build-and-analyze:
     runs-on: ubuntu-latest
     environment: env
-
     steps:
-      
       - name: 📦 Checkout repository
         uses: actions/checkout@v4
         with:
@@ -27,22 +21,22 @@ jobs:
           path: ~/.nuget/packages
           key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
 
-      - name: Cache SonarQube Cloud packages
+      - name: Cache SonarCloud packages
         uses: actions/cache@v4
         with:
-          path: ~\sonar\cache
+          path: ~/.sonar/cache
           key: ${{ runner.os }}-sonar
           restore-keys: ${{ runner.os }}-sonar
 
-      - name: Cache SonarQube Cloud scanner
+      - name: Cache SonarCloud scanner
         id: cache-sonar-scanner
         uses: actions/cache@v4
         with:
-          path: .\.sonar\scanner
+          path: ./.sonar/scanner
           key: ${{ runner.os }}-sonar-scanner
           restore-keys: ${{ runner.os }}-sonar-scanner
 
-      - name: Install SonarQube Cloud scanner
+      - name: Install SonarCloud scanner
         if: steps.cache-sonar-scanner.outputs.cache-hit != 'true'
         run: |
           mkdir -p ./.sonar/scanner
@@ -53,14 +47,17 @@ jobs:
         with:
           dotnet-version: 9.0.x
 
-      - name: 🧪 Start SonarQube analysis
+      - name: 🧪 Start SonarCloud analysis
+        # Sonar AI Code Assurance is a verification process for detecting AI-generated code
+        # and then running it through a structured and comprehensive analysis.
+        # This ensures all new code meets the highest standards of quality and security.
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: |
           ./.sonar/scanner/dotnet-sonarscanner begin \
             /k:"ShdwKick_Questly" \
             /o:"burninghouse" \
-            /d:sonar.host.url="https://sonarcloud.io"  \
+            /d:sonar.host.url="https://sonarcloud.io" \
             /d:sonar.token="$SONAR_TOKEN" \
             /d:sonar.cs.dotcover.reportsPaths="**/coverage.opencover.xml"
       
@@ -69,31 +66,41 @@ jobs:
           dotnet restore ${{ vars.SOLUTION_NAME }}
           dotnet build ${{ vars.SOLUTION_NAME }} --configuration Debug --no-restore
       
-      - name: 🧪 Finish SonarQube analysis
+      - name: 🧪 Finish SonarCloud analysis
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: |
           ./.sonar/scanner/dotnet-sonarscanner end \
             /d:sonar.token="$SONAR_TOKEN"
-        
-      - name: 🛠 Build Questly image
-        run: docker build -t ${{ vars.QUESTLY_IMAGE }} -f Questly/Dockerfile .
-            
-      - name: 🛠 Build QuestlyAdmin image
-        run: docker build -t ${{ vars.QUESTLY_ADMIN_IMAGE }} -f QuestlyAdmin/Dockerfile .
-        
+
+  # Job для сборки и публикации Docker образов
+  build-and-push:
+    runs-on: ubuntu-latest
+    environment: env
+    needs: build-and-analyze
+    steps:
+      - name: 📦 Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          
       - name: 🔐 Login to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
           
+      - name: 🛠 Build Questly image
+        run: docker build -t ${{ vars.QUESTLY_IMAGE }} -f Questly/Dockerfile .
+          
       - name: 🚀 Push Questly image
         run: docker push ${{ vars.QUESTLY_IMAGE }}:latest
-  
-      - name: 🚀 Push QuestlyAdmin image
-        run: docker push ${{ vars.QUESTLY_ADMIN_IMAGE }}:latest
-  
+
+  deploy:
+    runs-on: ubuntu-latest
+    environment: env
+    needs: build-and-push
+    steps:
       - name: 🧬 Deploy to server via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
