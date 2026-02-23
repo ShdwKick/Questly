@@ -62,13 +62,22 @@ public static class ServiceCollectionExtensions
         var jwt = new JwtSettings();
         configuration.GetSection("Jwt").Bind(jwt);
     
-        // Если значения не найдены в секции Jwt, ищем в корне конфигурации
-        if (string.IsNullOrEmpty(jwt.ServerKey))
-            jwt.ServerKey = configuration["SERVER_KEY"] ?? configuration["ServerKey"];
-        if (string.IsNullOrEmpty(jwt.Issuer))
-            jwt.Issuer = configuration["ISSUER"] ?? configuration["Issuer"];
-        if (string.IsNullOrEmpty(jwt.Audience))
-            jwt.Audience = configuration["AUDIENCE"] ?? configuration["Audience"];
+        jwt.ServerKey = configuration["SERVER_KEY"] ?? 
+                        configuration["Jwt:ServerKey"] ?? 
+                        configuration["ServerKey"] ?? 
+                        jwt.ServerKey;
+    
+        jwt.Issuer = configuration["ISSUER"] ?? 
+                     configuration["Jwt:Issuer"] ?? 
+                     configuration["Issuer"] ?? 
+                     jwt.Issuer;
+    
+        jwt.Audience = configuration["AUDIENCE"] ?? 
+                       configuration["Jwt:Audience"] ?? 
+                       configuration["Audience"] ?? 
+                       jwt.Audience;
+        
+        jwt.Validate();
 
         var keyBytes = Encoding.UTF8.GetBytes(jwt.ServerKey!);
         var securityKey = new SymmetricSecurityKey(keyBytes);
