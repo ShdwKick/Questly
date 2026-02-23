@@ -23,7 +23,7 @@ public static class ReferenceTypeValidationExtension
         string? message = null)
         where T :  class{
         
-        if (value.IsNull())
+        if (value.IsNotNull())
             return;
         
         throw new ArgumentException(
