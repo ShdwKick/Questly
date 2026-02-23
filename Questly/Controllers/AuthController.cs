@@ -1,4 +1,6 @@
 ﻿using DataModels;
+using DataModels.Extensions;
+using DataModels.Requests;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Questly.Services;
@@ -19,21 +21,15 @@ public class AuthController(
     [HttpPost("session-authenticate")]
     public async Task<ActionResult<TokenPair>> AuthenticateUser([FromBody] LoginRequest loginRequest)
     {
-        try
-        {
-            var httpContext = httpContextAccessor.HttpContext;
-            var userAgent = httpContext?.Request.Headers["User-Agent"].ToString() ?? "Unknown";
-            var ip = httpContext?.Connection?.RemoteIpAddress?.ToString() ?? "Unknown";
+        loginRequest.RequiredNotNull();
 
-            logger.LogInformation($"Login attempt for user: {loginRequest.Login}");
-            var tokenPair = await userService.LoginUser(loginRequest.Login, loginRequest.Password, userAgent, ip);
-            return Ok(tokenPair);
-        }
-        catch (ArgumentException ex)
-        {
-            logger.LogWarning($"Login failed: {ex.Message}");
-            return Unauthorized(new { error = ex.Message });
-        }
+        var httpContext = httpContextAccessor.HttpContext;
+        var userAgent = httpContext?.Request.Headers["User-Agent"].ToString() ?? "Unknown";
+        var ip = httpContext?.Connection?.RemoteIpAddress?.ToString() ?? "Unknown";
+
+        logger.LogInformation($"Login attempt for user: {loginRequest.Login}");
+        var tokenPair = await userService.LoginUser(loginRequest.Login, loginRequest.Password, userAgent, ip);
+        return Ok(tokenPair);
     }
 
     /// <summary>
@@ -42,21 +38,10 @@ public class AuthController(
     [HttpPost("token-refresh")]
     public async Task<ActionResult<object>> RefreshAccessToken([FromBody] RefreshTokenRequest refreshTokenRequest)
     {
-        try
-        {
-            var newAccessToken = await userService.TryRefreshAccessTokenAsync(refreshTokenRequest.RefreshToken);
-            return Ok(new { accessToken = newAccessToken });
-        }
-        catch (ArgumentNullException ex)
-        {
-            logger.LogWarning($"Token refresh failed: {ex.Message}");
-            return BadRequest(new { error = "Refresh token is required" });
-        }
-        catch (ArgumentException ex)
-        {
-            logger.LogWarning($"Token refresh failed: {ex.Message}");
-            return Unauthorized(new { error = ex.Message });
-        }
+        refreshTokenRequest.RequiredNotNull();
+
+        var newAccessToken = await userService.TryRefreshAccessTokenAsync(refreshTokenRequest.RefreshToken);
+        return Ok(new { accessToken = newAccessToken });
     }
 
     /// <summary>
@@ -66,42 +51,11 @@ public class AuthController(
     [HttpPost("session-logout")]
     public async Task<ActionResult<object>> LogoutUser([FromBody] LogoutRequest logoutRequest)
     {
-        try
-        {
-            var result = await userService.Logout(logoutRequest.RefreshToken);
-            if (!result)
-                return NotFound(new { success = result, message = "Session not found"});
-            return Ok(new { success = result, message = "Successfully logged out" });
-        }
-        catch (Exception ex)
-        {
-            logger.LogWarning($"Logout failed: {ex.Message}");
-            return BadRequest(new { error = ex.Message });
-        }
+        logoutRequest.RequiredNotNull();
+
+        var result = await userService.Logout(logoutRequest.RefreshToken);
+        if (!result)
+            return NotFound(new { success = result, message = "Session not found" });
+        return Ok(new { success = result, message = "Successfully logged out" });
     }
-}
-
-/// <summary>
-/// DTO для аутентификации
-/// </summary>
-public class LoginRequest
-{
-    public string Login { get; set; }
-    public string Password { get; set; }
-}
-
-/// <summary>
-/// DTO для обновления токена
-/// </summary>
-public class RefreshTokenRequest
-{
-    public string RefreshToken { get; set; }
-}
-
-/// <summary>
-/// DTO для выхода из системы
-/// </summary>
-public class LogoutRequest
-{
-    public string RefreshToken { get; set; }
 }

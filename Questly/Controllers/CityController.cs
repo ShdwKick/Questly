@@ -21,6 +21,9 @@ public class CitiesController(ICityService cityService) : ControllerBase
     [ProducesResponseType(404)]
     public async Task<ActionResult<City>> GetCityInfo(Guid cityId)
     {
+        if(cityId == Guid.Empty)
+            return BadRequest("Invalid city ID");
+        
         var city = await cityService.GetCityInfo(cityId);
         return city is null ? NotFound() : Ok(city);
     }
