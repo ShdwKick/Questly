@@ -59,16 +59,16 @@ public static class ServiceCollectionExtensions
 
     public static void AddQuestlyAuthentication(this IServiceCollection services, IConfiguration configuration)
     {
-        // Если не получилось через DI (на этапе регистрации сервисов), создаем временный
-        var configHelper = services.BuildServiceProvider().GetService<IConfigurationHelper>() ?? new ConfigurationHelper(configuration);
-
-        var jwt = new JwtSettings
-        {
-            ServerKey = configHelper.GetServerKey(),
-            Audience = configHelper.GetAudience(),
-            Issuer = configHelper.GetIssuer(),
-        };
-        jwt.Validate();
+        var jwt = new JwtSettings();
+        configuration.GetSection("Jwt").Bind(jwt);
+    
+        // Если значения не найдены в секции Jwt, ищем в корне конфигурации
+        if (string.IsNullOrEmpty(jwt.ServerKey))
+            jwt.ServerKey = configuration["SERVER_KEY"] ?? configuration["ServerKey"];
+        if (string.IsNullOrEmpty(jwt.Issuer))
+            jwt.Issuer = configuration["ISSUER"] ?? configuration["Issuer"];
+        if (string.IsNullOrEmpty(jwt.Audience))
+            jwt.Audience = configuration["AUDIENCE"] ?? configuration["Audience"];
 
         var keyBytes = Encoding.UTF8.GetBytes(jwt.ServerKey!);
         var securityKey = new SymmetricSecurityKey(keyBytes);
