@@ -3,23 +3,17 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Questly.Services
 {
-    public class DatabaseInitializerService : IHostedService
+    public class DatabaseInitializerService(
+        IServiceProvider serviceProvider,
+        ILogger<DatabaseInitializerService> logger)
+        : IHostedService
     {
-        private readonly IServiceProvider _serviceProvider;
-        private readonly ILogger<DatabaseInitializerService> _logger;
-
-        public DatabaseInitializerService(IServiceProvider serviceProvider, ILogger<DatabaseInitializerService> logger)
-        {
-            _serviceProvider = serviceProvider;
-            _logger = logger;
-        }
-
         public async Task StartAsync(CancellationToken cancellationToken)
         {
-            using var scope = _serviceProvider.CreateScope();
+            using var scope = serviceProvider.CreateScope();
             var dbContext = scope.ServiceProvider.GetRequiredService<DatabaseContext>();
 
-            _logger.LogInformation("Инициализация базы данных...");
+            logger.LogInformation("Инициализация базы данных...");
 
             try
             {
@@ -38,12 +32,12 @@ namespace Questly.Services
                     });
 
                     await dbContext.SaveChangesAsync(cancellationToken);
-                    _logger.LogInformation("Добавлен тестовый администратор");
+                    logger.LogInformation("Добавлен тестовый город");
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Ошибка при инициализации базы данных");
+                logger.LogError(ex, "Ошибка при инициализации базы данных");
             }
         }
 

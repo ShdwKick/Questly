@@ -18,7 +18,7 @@ namespace Questly.Extensions
         public static IServiceCollection AddQuestlyConfiguration(this IServiceCollection services, IConfiguration configuration)
         {
             services.Configure<JwtSettings>(configuration.GetSection("Jwt"));
-            // bind legacy env var if needed
+            
             var conn = configuration.GetConnectionString("Default");
             if (!string.IsNullOrEmpty(conn))
             {
@@ -61,12 +61,17 @@ namespace Questly.Extensions
             return services;
         }
 
-        public static IServiceCollection AddQuestlyAuthentication(this IServiceCollection services, IConfiguration configuration)
+        public static IServiceCollection AddQuestlyAuthentication(this IServiceCollection services, IConfigurationHelper configHelper)
         {
-            var jwtSection = configuration.GetSection("Jwt");
-            var jwt = jwtSection.Get<JwtSettings>() ?? new JwtSettings();
+            var jwt = new JwtSettings
+            {
+                ServerKey = configHelper.GetServerKey(),
+                Audience = configHelper.GetAudience(),
+                Issuer = configHelper.GetIssuer(),
+            };
+            jwt.Validate();
 
-            var keyBytes = Encoding.UTF8.GetBytes(jwt.ServerKey);
+            var keyBytes = Encoding.UTF8.GetBytes(jwt.ServerKey!);
             var securityKey = new SymmetricSecurityKey(keyBytes);
             var tokenValidation = new TokenValidationParameters
             {

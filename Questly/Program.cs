@@ -8,6 +8,12 @@ namespace Questly
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
+            
+            if (!string.IsNullOrEmpty(builder.Configuration["CONNECTION_STRING"]))
+            {
+                builder.Configuration["ConnectionStrings:Default"] = 
+                    builder.Configuration["CONNECTION_STRING"];
+            }
 
             // Конфигурация и регистрация сервисов через extension-методы
             builder.Services.AddQuestlyConfiguration(builder.Configuration);

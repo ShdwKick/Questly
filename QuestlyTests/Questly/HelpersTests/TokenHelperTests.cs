@@ -19,7 +19,7 @@ namespace QuestlyTests.Questly.HelpersTests
             public string GetRabbitHostName() => "rabbit-host";
             public string GetRabbitUserName() => "rabbit-user";
             public string GetRabbitPassword() => "rabbit-pass";
-            public string GetSalt() => "somesalt";
+            public string? GetSalt() => "somesalt";
         }
 
         private HttpContextAccessor CreateHttpContextAccessorWithAuth(string? headerValue)
