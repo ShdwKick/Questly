@@ -126,6 +126,10 @@ jobs:
               RABBITMQ_PASSWORD=${{ vars.RABBITMQ_PASSWORD }}
               RABBITMQ_HOSTNAME=${{ vars.RABBITMQ_HOSTNAME }}
             EOF
+
+            echo "=== Содержимое файла .env ==="
+            cat .env
+            echo "=========================="
             
             echo "=== 1. Проверка состояния системы ==="
             echo "Свободная память:"
