@@ -29,12 +29,17 @@ public static class Program
         }
         
         Log.Logger = new LoggerConfiguration()
+            .MinimumLevel.Debug()
+            .WriteTo.Console()
+            .CreateBootstrapLogger();
+        
+        Log.Logger = new LoggerConfiguration()
             .Enrich.FromLogContext()
             .Enrich.WithEnvironmentName()
             .Enrich.WithThreadId()
             .WriteTo.Console()
             .WriteTo.Elasticsearch(
-                new[] { new Uri("http://localhost:9200") },
+                new[] { new Uri("http://elasticsearch:9200") },
                 opts =>
                 {
                     opts.DataStream = new DataStreamName("logs-myapp-development");
