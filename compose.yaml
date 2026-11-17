@@ -1,6 +1,9 @@
 services:
   postgres:
-    image: postgres:latest
+    # Мажорная версия зафиксирована намеренно. На postgres:latest переход на
+    # следующий мажор меняет формат каталога данных, и том перестаёт читаться.
+    # Повышать мажор нужно осознанно, через pg_upgrade или дамп.
+    image: postgres:18
     container_name: questly-postgres
     restart: unless-stopped
     environment:
@@ -31,7 +34,7 @@ services:
     # поэтому контейнер должен подниматься заново сам.
     restart: unless-stopped
     labels:
-      # Этот контейнер Watchtower обновляет автоматически (см. deploy/watchtower-compose.yml)
+      # Этот контейнер Watchtower обновляет автоматически (сервис watchtower ниже)
       com.centurylinklabs.watchtower.enable: "true"
     environment:
       SERVER_KEY: ${SERVER_KEY}
@@ -49,6 +52,31 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+
+  # Подменяет контейнер приложения, когда workflow "Build and publish" выложил
+  # новый образ в Docker Hub. Это и есть деплой: на сервер из CI никто не ходит.
+  #
+  # ВНИМАНИЕ для локальной работы: поднимается вместе со всем стеком и через
+  # минуту заменит локально собранный образ на :latest из реестра. Локально
+  # поднимайте только нужные сервисы:
+  #
+  #   docker compose up -d --build postgres questly
+  watchtower:
+    image: containrrr/watchtower:latest
+    container_name: questly-watchtower
+    restart: unless-stopped
+    environment:
+      # Обновляется только то, что помечено лейблом watchtower.enable=true,
+      # то есть questly-app. Postgres под автообновление не попадает намеренно:
+      # смена мажорной версии базы требует pg_upgrade, а не подмены контейнера.
+      WATCHTOWER_LABEL_ENABLE: "true"
+      WATCHTOWER_CLEANUP: "true"
+      WATCHTOWER_INCLUDE_RESTARTING: "true"
+      # Как часто опрашивать реестр, в секундах
+      WATCHTOWER_POLL_INTERVAL: "60"
+    volumes:
+      # Доступ к сокету Docker — это полный контроль над хостом.
+      - /var/run/docker.sock:/var/run/docker.sock
 
 volumes:
   pgdata:

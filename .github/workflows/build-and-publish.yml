@@ -1,14 +1,13 @@
 name: Build and publish
 
 # Пуш в main -> собираем образ и пушим в Docker Hub. На сервер этот workflow НЕ ходит:
-# новый образ забирает Watchtower, который там крутится (установка — deploy/watchtower-compose.yml).
+# новый образ забирает Watchtower, который там крутится (сервис watchtower в compose.yaml).
 # Поэтому здесь нет SSH-ключа — нужен только токен Docker Hub, а он доступа к серверу не даёт.
 on:
   push:
     branches: [main]
     paths-ignore:
       - '**.md'
-      - 'deploy/**'
   workflow_dispatch:
 
 # Не даём двум сборкам накладываться друг на друга, если запушили несколько коммитов подряд

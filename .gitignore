@@ -34,6 +34,8 @@ secrets.json
 # Env files
 .env
 .env.*
+# ...кроме шаблона без секретов — он нужен в репозитории
+!.env.example
 
 # Launch profiles
 **/Properties/launchSettings.json
