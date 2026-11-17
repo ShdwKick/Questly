@@ -1,4 +1,4 @@
-﻿using System.Text;
+using System.Text;
 using DataModels.DTOs;
 using DataModels.Helpers;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -18,11 +18,18 @@ public static class ServiceCollectionExtensions
         services.Configure<JwtSettings>(configuration.GetSection("Jwt"));
             
         var conn = configuration.GetConnectionString("Default");
-        if (!string.IsNullOrEmpty(conn))
+
+        // Без строки подключения приложение не способно обслужить ни один запрос,
+        // поэтому падаем на старте с понятной ошибкой, а не на первом обращении к базе.
+        if (string.IsNullOrWhiteSpace(conn))
         {
-            services.AddDbContextPool<DataModels.DatabaseContext>(opt =>
-                opt.UseNpgsql(conn));
+            throw new InvalidOperationException(
+                "Строка подключения к базе не задана. Укажите переменную окружения CONNECTION_STRING " +
+                "или ConnectionStrings:Default в конфигурации.");
         }
+
+        services.AddDbContextPool<DataModels.DatabaseContext>(opt =>
+            opt.UseNpgsql(conn, npgsql => npgsql.EnableRetryOnFailure(5)));
     }
 
     public static void AddQuestlyServices(this IServiceCollection services)

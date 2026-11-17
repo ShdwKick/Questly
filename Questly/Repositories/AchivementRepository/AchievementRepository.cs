@@ -1,4 +1,5 @@
-﻿using DataModels;
+using DataModels;
+using DataModels.Results;
 using Microsoft.EntityFrameworkCore;
 
 namespace Questly.Repositories;
@@ -14,7 +15,10 @@ public class AchievementRepository : IAchievementRepository
 
     public async Task<Achievement> GetAchievementInfo(Guid achId)
     {
-        var achievement = await _databaseConnection.Achievements.FirstOrDefaultAsync(q => q.Id == achId);
+        var achievement = await _databaseConnection.Achievements
+            .AsNoTracking()
+            .FirstOrDefaultAsync(q => q.Id == achId);
+
         if (achievement == null)
             throw new KeyNotFoundException($"Achievement with ID {achId} not found");
 
@@ -23,16 +27,40 @@ public class AchievementRepository : IAchievementRepository
 
     public async Task<List<UserAchievement>> GetUserCompletedAchievements(Guid userId)
     {
-        return await _databaseConnection.UserAchievements.Where(q => q.UserId == userId || q.IsCompleted).ToListAsync();
+        return await _databaseConnection.UserAchievements
+            .AsNoTracking()
+            .Where(q => q.UserId == userId && q.IsCompleted)
+            .ToListAsync();
     }
 
     public async Task<List<UserAchievement>> GetUserAchievements(Guid userId)
     {
-        return await _databaseConnection.UserAchievements.Where(q => q.UserId == userId).ToListAsync();
+        return await _databaseConnection.UserAchievements
+            .AsNoTracking()
+            .Where(q => q.UserId == userId)
+            .ToListAsync();
     }
-        
-    public IQueryable<Achievement> GetCityAchievements(Guid cityId)
+
+    public async Task<PaginatedResult<Achievement>> GetCityAchievementsAsync(Guid cityId, int page, int pageSize)
     {
-        return _databaseConnection.Achievements.Where(q => q.CategoryId == cityId).AsQueryable();
+        var query = _databaseConnection.Achievements
+            .AsNoTracking()
+            .Where(q => q.CityId == cityId)
+            .OrderBy(q => q.Title)
+            .ThenBy(q => q.Id);
+
+        var totalItems = await query.CountAsync();
+        var items = await query
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        return new PaginatedResult<Achievement>
+        {
+            Items = items,
+            TotalItems = totalItems,
+            Page = page,
+            PageSize = pageSize
+        };
     }
 }

@@ -1,4 +1,6 @@
-﻿using DataModels;
+using DataModels;
+using DataModels.Extensions;
+using DataModels.Results;
 using Questly.Repositories;
 
 namespace Questly.Services;
@@ -45,11 +47,14 @@ public class AchievementService : IAchievementService
         return await _achievementRepository.GetUserAchievements(userId);
     }
         
-    public IQueryable<Achievement> GetCityAchievements(Guid cityId)
+    public async Task<PaginatedResult<Achievement>> GetCityAchievementsAsync(Guid cityId, int page, int pageSize)
     {
         if (cityId == Guid.Empty)
             throw new ArgumentException("City ID cannot be empty", nameof(cityId));
-            
-        return _achievementRepository.GetCityAchievements(cityId);
+
+        page.RequiredGreaterThan(0);
+        pageSize.RequiredInRange(1, 100);
+
+        return await _achievementRepository.GetCityAchievementsAsync(cityId, page, pageSize);
     }
 }

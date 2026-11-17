@@ -1,4 +1,4 @@
-﻿using Elastic.Extensions.Logging;
+using Elastic.Extensions.Logging;
 using Questly.Exceptions;
 using Questly.Extensions;
 using Questly.Middlewares;
@@ -32,8 +32,6 @@ public static class Program
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen();
 
-        // Добавление CORS с правильным синтаксисом
-        builder.Services.AddControllers();
         builder.Services.AddCors(options =>
         {
             options.AddPolicy("AllowAll", policy => { policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader(); });

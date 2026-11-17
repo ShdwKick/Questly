@@ -1,0 +1,23 @@
+# Watchtower: следит за Docker Hub и подменяет контейнер приложения, когда
+# workflow "Build and publish" выложил новый образ. Поднимается на сервере
+# один раз и живёт отдельно от compose.yaml приложения:
+#
+#   docker compose -f deploy/watchtower-compose.yml up -d
+#
+# WATCHTOWER_LABEL_ENABLE=true — обновляется только то, что помечено
+# лейблом com.centurylinklabs.watchtower.enable=true. Postgres под эту
+# политику не попадает намеренно: мажорное обновление базы само себя не
+# мигрирует, его делают руками.
+services:
+  watchtower:
+    image: containrrr/watchtower:latest
+    container_name: watchtower
+    restart: unless-stopped
+    environment:
+      WATCHTOWER_LABEL_ENABLE: "true"
+      WATCHTOWER_CLEANUP: "true"
+      WATCHTOWER_INCLUDE_RESTARTING: "true"
+      # Как часто опрашивать реестр, в секундах
+      WATCHTOWER_POLL_INTERVAL: "60"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock

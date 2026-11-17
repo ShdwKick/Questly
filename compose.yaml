@@ -1,7 +1,8 @@
-﻿services:
+services:
   postgres:
     image: postgres:latest
     container_name: questly-postgres
+    restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -26,6 +27,12 @@
   questly:
     container_name: questly-app
     image: shadowkick/questly:latest
+    # Инициализатор базы валит старт, если схему применить не удалось,
+    # поэтому контейнер должен подниматься заново сам.
+    restart: unless-stopped
+    labels:
+      # Этот контейнер Watchtower обновляет автоматически (см. deploy/watchtower-compose.yml)
+      com.centurylinklabs.watchtower.enable: "true"
     environment:
       SERVER_KEY: ${SERVER_KEY}
       HASH_SALT: ${HASH_SALT}

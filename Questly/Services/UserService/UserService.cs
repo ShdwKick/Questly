@@ -1,5 +1,7 @@
-﻿using DataModels;
+using DataModels;
+using DataModels.Extensions;
 using DataModels.Helpers;
+using DataModels.Results;
 using Questly.Repositories;
 
 namespace Questly.Services;
@@ -61,8 +63,11 @@ public class UserService(
         return await authorizationRepository.Logout(refreshToken);
     }
 
-    public IQueryable<User> GetAllUsers()
+    public async Task<PaginatedResult<User>> GetUsersAsync(int page, int pageSize)
     {
-        return userRepository.GetAllUsers();
+        page.RequiredGreaterThan(0);
+        pageSize.RequiredInRange(1, 100);
+
+        return await userRepository.GetUsersAsync(page, pageSize);
     }
 }

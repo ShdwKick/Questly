@@ -1,4 +1,4 @@
-﻿using System.IdentityModel.Tokens.Jwt;
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
@@ -11,17 +11,33 @@ namespace Questly.Helpers;
 public class TokenHelper(IConfigurationHelper configuration, IHttpContextAccessor httpContextAccessor)
     : ITokenHelper
 {
+    private const string BearerPrefix = "Bearer ";
+
     public string GetTokenFromHeader()
     {
-        var httpContext = httpContextAccessor.HttpContext;
-        string authorizationHeader = httpContext.Request.Headers["Authorization"];
+        var httpContext = httpContextAccessor.HttpContext
+            ?? throw new InvalidOperationException("Нет активного HTTP-контекста");
 
-        if (string.IsNullOrEmpty(authorizationHeader) || !authorizationHeader.StartsWith("Bearer "))
+        string? authorizationHeader = httpContext.Request.Headers.Authorization;
+
+        // StringComparison.Ordinal важен: сравнение по текущей культуре может
+        // считать часть символов незначащими, и префикс совпадёт там, где не должен.
+        if (string.IsNullOrEmpty(authorizationHeader)
+            || !authorizationHeader.StartsWith(BearerPrefix, StringComparison.Ordinal))
         {
             throw new ArgumentException("INVALID_AUTHORIZATION_HEADER_PROBLEM");
         }
 
-        return authorizationHeader.Substring("Bearer ".Length).Trim();
+        var token = authorizationHeader[BearerPrefix.Length..].Trim();
+
+        // "Bearer " без самого токена — заголовок формально валиден, но бесполезен.
+        // Раньше отсюда возвращалась пустая строка и уезжала в ReadToken.
+        if (string.IsNullOrEmpty(token))
+        {
+            throw new ArgumentException("INVALID_AUTHORIZATION_HEADER_PROBLEM");
+        }
+
+        return token;
     }
     
     public TokenPair GenerateTokens(User user, string jti)

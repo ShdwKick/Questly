@@ -1,6 +1,7 @@
-﻿using System.IdentityModel.Tokens.Jwt;
+using System.IdentityModel.Tokens.Jwt;
 using DataModels;
 using DataModels.Helpers;
+using DataModels.Results;
 using Microsoft.EntityFrameworkCore;
 using Questly.DataBase;
 
@@ -18,6 +19,7 @@ public class UserRepository(
             throw new ArgumentException("User ID cannot be empty", nameof(userId));
 
         var user = await databaseConnection.Users
+            .AsNoTracking()
             .FirstOrDefaultAsync(q => q.Id == userId);
 
         if (user == null)
@@ -167,8 +169,25 @@ public class UserRepository(
         return tokens;
     }
         
-    public IQueryable<User> GetAllUsers()
+    public async Task<PaginatedResult<User>> GetUsersAsync(int page, int pageSize)
     {
-        return databaseConnection.Users.AsQueryable();
+        var query = databaseConnection.Users
+            .AsNoTracking()
+            .OrderBy(q => q.Username)
+            .ThenBy(q => q.Id);
+
+        var totalItems = await query.CountAsync();
+        var items = await query
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        return new PaginatedResult<User>
+        {
+            Items = items,
+            TotalItems = totalItems,
+            Page = page,
+            PageSize = pageSize
+        };
     }
 }

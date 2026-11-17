@@ -1,4 +1,4 @@
-﻿using System.IdentityModel.Tokens.Jwt;
+using System.IdentityModel.Tokens.Jwt;
 using DataModels;
 using DataModels.Helpers;
 using Microsoft.EntityFrameworkCore;
@@ -112,12 +112,12 @@ public class AuthorizationRepository : IAuthorizationRepository
                 s.RefreshTokenHash == hashed && 
                 s.RevokedAt == null);
 
-        if (session != null)
-        {
-            session.RevokedAt = DateTime.UtcNow;
-            await _databaseConnection.SaveChangesAsync();
-        }
+        if (session == null)
+            return false;
 
-        return false;
+        session.RevokedAt = DateTime.UtcNow;
+        await _databaseConnection.SaveChangesAsync();
+
+        return true;
     }
 }
