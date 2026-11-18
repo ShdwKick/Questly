@@ -1,5 +1,6 @@
 using DataModels;
 using DataModels.Extensions;
+using DataModels.Requests;
 using DataModels.Results;
 using Questly.Repositories;
 
@@ -9,12 +10,15 @@ public class AchievementService : IAchievementService
 {
     private readonly IAchievementRepository _achievementRepository;
     private readonly IUserRepository _userRepository;
+    private readonly ICityRepository _cityRepository;
 
     public AchievementService(IAchievementRepository achievementRepository, 
-                             IUserRepository userRepository)
+                             IUserRepository userRepository,
+                             ICityRepository cityRepository)
     {
         _achievementRepository = achievementRepository;
         _userRepository = userRepository;
+        _cityRepository = cityRepository;
     }
 
     public async Task<Achievement> GetAchievementInfo(Guid achId)
@@ -56,5 +60,52 @@ public class AchievementService : IAchievementService
         pageSize.RequiredInRange(1, 100);
 
         return await _achievementRepository.GetCityAchievementsAsync(cityId, page, pageSize);
+    }
+
+    public async Task<Achievement> CreateAchievementAsync(AchievementRequest request)
+    {
+        request.RequiredNotNull();
+
+        await ValidateReferencesAsync(request);
+
+        return await _achievementRepository.CreateAchievementAsync(request);
+    }
+
+    public async Task<Achievement> UpdateAchievementAsync(Guid achId, AchievementRequest request)
+    {
+        request.RequiredNotNull();
+
+        if (achId == Guid.Empty)
+            throw new ArgumentException("Achievement ID cannot be empty", nameof(achId));
+
+        await ValidateReferencesAsync(request);
+
+        return await _achievementRepository.UpdateAchievementAsync(achId, request);
+    }
+
+    /// <summary>
+    /// Проверяет, что указанные город и категория существуют. Без этой проверки
+    /// битый идентификатор уходил бы в базу и возвращался нарушением внешнего
+    /// ключа, то есть клиент получал бы 500 вместо внятного 404.
+    /// </summary>
+    private async Task ValidateReferencesAsync(AchievementRequest request)
+    {
+        if (request.CityId is { } cityId)
+        {
+            if (cityId == Guid.Empty)
+                throw new ArgumentException("City ID cannot be empty", nameof(request.CityId));
+
+            if (!await _cityRepository.DoesCityExist(cityId))
+                throw new KeyNotFoundException($"City with ID {cityId} not found");
+        }
+
+        if (request.CategoryId is { } categoryId)
+        {
+            if (categoryId == Guid.Empty)
+                throw new ArgumentException("Category ID cannot be empty", nameof(request.CategoryId));
+
+            if (!await _achievementRepository.DoesCategoryExistAsync(categoryId))
+                throw new KeyNotFoundException($"Achievement category with ID {categoryId} not found");
+        }
     }
 }

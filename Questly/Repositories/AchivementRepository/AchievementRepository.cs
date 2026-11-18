@@ -1,4 +1,5 @@
 using DataModels;
+using DataModels.Requests;
 using DataModels.Results;
 using Microsoft.EntityFrameworkCore;
 
@@ -62,5 +63,61 @@ public class AchievementRepository : IAchievementRepository
             Page = page,
             PageSize = pageSize
         };
+    }
+
+    public async Task<bool> DoesCategoryExistAsync(Guid categoryId)
+    {
+        return await _databaseConnection.AchievementCategories
+            .AsNoTracking()
+            .AnyAsync(q => q.Id == categoryId);
+    }
+
+    public async Task<Achievement> CreateAchievementAsync(AchievementRequest request)
+    {
+        var achievement = new Achievement
+        {
+            Id = Guid.NewGuid(),
+            CreatedAt = DateTime.UtcNow
+        };
+
+        Apply(request, achievement);
+
+        _databaseConnection.Achievements.Add(achievement);
+        await _databaseConnection.SaveChangesAsync();
+
+        return achievement;
+    }
+
+    public async Task<Achievement> UpdateAchievementAsync(Guid achId, AchievementRequest request)
+    {
+        var achievement = await _databaseConnection.Achievements
+            .FirstOrDefaultAsync(q => q.Id == achId);
+
+        if (achievement == null)
+            throw new KeyNotFoundException($"Achievement with ID {achId} not found");
+
+        Apply(request, achievement);
+
+        await _databaseConnection.SaveChangesAsync();
+
+        return achievement;
+    }
+
+    /// <summary>
+    /// Переносит поля запроса в сущность. CreatedAt и Id не трогаем:
+    /// дата создания при обновлении должна остаться прежней.
+    /// </summary>
+    private static void Apply(AchievementRequest request, Achievement achievement)
+    {
+        achievement.Title = request.Title.Trim();
+        achievement.Description = request.Description.Trim();
+        achievement.Goal = request.Goal;
+        achievement.RewardScore = request.RewardScore;
+        achievement.CityId = request.CityId;
+        achievement.CategoryId = request.CategoryId;
+        achievement.IconUrl = request.IconUrl.Trim();
+        achievement.Lat = request.Lat;
+        achievement.Lon = request.Lon;
+        achievement.IsPartner = request.IsPartner;
     }
 }

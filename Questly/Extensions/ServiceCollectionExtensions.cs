@@ -2,8 +2,11 @@ using System.Text;
 using DataModels.DTOs;
 using DataModels.Helpers;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+// Только нужный тип: полный using конфликтует с Questly.Services.IAuthorizationService.
+using IAuthorizationHandler = Microsoft.AspNetCore.Authorization.IAuthorizationHandler;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Questly.Authorization;
 using Questly.Helpers;
 using Questly.Infrastructure.Helpers;
 using Questly.Repositories;
@@ -53,6 +56,23 @@ public static class ServiceCollectionExtensions
         services.AddHttpContextAccessor();
         services.AddMemoryCache();
         services.AddHostedService<DatabaseInitializerService>();
+    }
+
+    /// <summary>
+    /// Политики авторизации. Право администратора проверяется по базе
+    /// (см. <see cref="AdminAuthorizationHandler"/>), поэтому обработчик
+    /// регистрируется как scoped — ему нужен репозиторий из области запроса.
+    /// </summary>
+    public static void AddQuestlyAuthorization(this IServiceCollection services)
+    {
+        services.AddScoped<IAuthorizationHandler, AdminAuthorizationHandler>();
+
+        services.AddAuthorizationBuilder()
+            .AddPolicy(Policies.Admin, policy =>
+            {
+                policy.RequireAuthenticatedUser();
+                policy.AddRequirements(new AdminRequirement());
+            });
     }
 
     public static void AddQuestlyAuthentication(this IServiceCollection services, IConfiguration configuration)

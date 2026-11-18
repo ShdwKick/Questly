@@ -70,4 +70,24 @@ public class UserService(
 
         return await userRepository.GetUsersAsync(page, pageSize);
     }
+
+    public async Task<User> SetAdminAsync(Guid userId, bool isAdmin)
+    {
+        if (userId == Guid.Empty)
+            throw new ArgumentException("INVALID_USER_ID_PROBLEM", nameof(userId));
+
+        // Снять права с самого себя нельзя. Иначе единственный администратор
+        // одним запросом лишает систему возможности управлять контентом,
+        // и вернуть права можно будет только через ADMIN_USERNAMES или SQL.
+        if (!isAdmin && userId == headerHelper.GetUserIdFromHeader())
+            throw new ArgumentException("CANNOT_REVOKE_OWN_ADMIN_PROBLEM", nameof(userId));
+
+        var user = await userRepository.SetAdminAsync(userId, isAdmin);
+
+        logger.LogInformation(
+            "Права администратора у пользователя {UserId} установлены в {IsAdmin}",
+            userId, isAdmin);
+
+        return user;
+    }
 }

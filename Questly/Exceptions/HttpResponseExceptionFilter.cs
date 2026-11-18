@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using DataModels.Exceptions;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 
 namespace Questly.Exceptions;
@@ -28,6 +29,23 @@ public class HttpResponseExceptionFilter : IActionFilter, IOrderedFilter
             context.Result = new ObjectResult(problemDetails)
             {
                 StatusCode = StatusCodes.Status404NotFound
+            };
+            context.ExceptionHandled = true;
+        }
+        else if (context.Exception is ConflictException conflictException)
+        {
+            var problemDetails = new ProblemDetails
+            {
+                Type = "https://tools.ietf.org/html/rfc7231#section-6.5.8",
+                Title = "Conflict",
+                Status = StatusCodes.Status409Conflict,
+                Detail = conflictException.Message,
+                Instance = context.HttpContext.Request.Path
+            };
+
+            context.Result = new ObjectResult(problemDetails)
+            {
+                StatusCode = StatusCodes.Status409Conflict
             };
             context.ExceptionHandled = true;
         }

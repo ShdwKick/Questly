@@ -190,4 +190,36 @@ public class UserRepository(
             PageSize = pageSize
         };
     }
+
+    public async Task<bool> IsActiveAdminAsync(Guid userId)
+    {
+        if (userId == Guid.Empty)
+            return false;
+
+        return await databaseConnection.Users
+            .AsNoTracking()
+            .AnyAsync(q => q.Id == userId && q.IsAdmin && !q.IsBlocked);
+    }
+
+    public async Task<User> SetAdminAsync(Guid userId, bool isAdmin)
+    {
+        if (userId == Guid.Empty)
+            throw new ArgumentException("User ID cannot be empty", nameof(userId));
+
+        var user = await databaseConnection.Users.FirstOrDefaultAsync(q => q.Id == userId);
+        if (user == null)
+            throw new KeyNotFoundException($"User with ID {userId} not found");
+
+        if (user.IsAdmin == isAdmin)
+            return user;
+
+        user.IsAdmin = isAdmin;
+        await databaseConnection.SaveChangesAsync();
+
+        logger.LogInformation(
+            "Признак администратора у пользователя {UserId} переведён в {IsAdmin}",
+            userId, isAdmin);
+
+        return user;
+    }
 }

@@ -28,9 +28,10 @@ public static class Program
         builder.Services.AddQuestlyConfiguration(builder.Configuration);
         builder.Services.AddQuestlyServices();
         builder.Services.AddQuestlyAuthentication(builder.Configuration);
+        builder.Services.AddQuestlyAuthorization();
 
         builder.Services.AddEndpointsApiExplorer();
-        builder.Services.AddSwaggerGen();
+        builder.Services.AddQuestlySwagger();
 
         builder.Services.AddCors(options =>
         {

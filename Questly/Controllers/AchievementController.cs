@@ -1,7 +1,9 @@
 using DataModels;
+using DataModels.Requests;
 using DataModels.Results;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Questly.Authorization;
 using Questly.Services;
 
 namespace Questly.Controllers;
@@ -88,5 +90,45 @@ public class AchievementsController(IAchievementService achievementService) : Co
 
         var result = await achievementService.GetCityAchievementsAsync(cityId, page, pageSize);
         return Ok(result);
+    }
+
+    /// <summary>
+    /// Создать достижение. Только для администраторов
+    /// </summary>
+    /// <response code="201">Достижение создано</response>
+    /// <response code="400">Некорректные данные запроса</response>
+    /// <response code="403">Недостаточно прав</response>
+    /// <response code="404">Указанный город или категория не найдены</response>
+    [Authorize(Policy = Policies.Admin)]
+    [HttpPost]
+    [ProducesResponseType(typeof(Achievement), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<Achievement>> CreateAchievement([FromBody] AchievementRequest request)
+    {
+        var achievement = await achievementService.CreateAchievementAsync(request);
+        return CreatedAtAction(nameof(GetAchievementInfo), new { achId = achievement.Id }, achievement);
+    }
+
+    /// <summary>
+    /// Обновить достижение. Только для администраторов
+    /// </summary>
+    /// <param name="achId">Уникальный идентификатор достижения</param>
+    /// <param name="request">Новые данные достижения. Передаются целиком, незаполненные поля очищаются</param>
+    /// <response code="200">Достижение обновлено</response>
+    /// <response code="400">Некорректные данные запроса</response>
+    /// <response code="403">Недостаточно прав</response>
+    /// <response code="404">Достижение, город или категория не найдены</response>
+    [Authorize(Policy = Policies.Admin)]
+    [HttpPut("{achId:guid}")]
+    [ProducesResponseType(typeof(Achievement), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<Achievement>> UpdateAchievement(Guid achId, [FromBody] AchievementRequest request)
+    {
+        var achievement = await achievementService.UpdateAchievementAsync(achId, request);
+        return Ok(achievement);
     }
 }

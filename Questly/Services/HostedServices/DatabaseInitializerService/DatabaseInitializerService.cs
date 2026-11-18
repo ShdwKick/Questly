@@ -56,6 +56,7 @@ public class DatabaseInitializerService(
     {
         using var scope = serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<DatabaseContext>();
+        var configuration = scope.ServiceProvider.GetRequiredService<IConfiguration>();
 
         logger.LogInformation("Инициализация базы данных...");
 
@@ -98,6 +99,7 @@ public class DatabaseInitializerService(
         }
 
         await SeedAsync(dbContext, cancellationToken);
+        await GrantAdminsAsync(dbContext, configuration, cancellationToken);
     }
 
     private async Task SeedAsync(DatabaseContext dbContext, CancellationToken cancellationToken)
@@ -116,6 +118,62 @@ public class DatabaseInitializerService(
 
         await dbContext.SaveChangesAsync(cancellationToken);
         logger.LogInformation("Добавлен стартовый город");
+    }
+
+    /// <summary>
+    /// Выдаёт права администратора пользователям, перечисленным в ADMIN_USERNAMES
+    /// (имена через запятую). Это способ получить первого администратора:
+    /// выдавать права по API может только администратор, а в чистой базе его нет.
+    ///
+    /// Права только выдаются, никогда не снимаются: удаление имени из переменной
+    /// не разжалует пользователя. Снять права можно через
+    /// PUT /api/users/{userId}/admin. Так сделано, чтобы опечатка в переменной
+    /// окружения не отобрала доступ у действующего администратора.
+    /// </summary>
+    private async Task GrantAdminsAsync(
+        DatabaseContext dbContext,
+        IConfiguration configuration,
+        CancellationToken cancellationToken)
+    {
+        var raw = configuration["ADMIN_USERNAMES"];
+        if (string.IsNullOrWhiteSpace(raw))
+            return;
+
+        var usernames = raw
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        if (usernames.Count == 0)
+            return;
+
+        var granted = 0;
+
+        foreach (var username in usernames)
+        {
+            var user = await dbContext.Users
+                .FirstOrDefaultAsync(u => u.Username == username, cancellationToken);
+
+            if (user == null)
+            {
+                logger.LogWarning(
+                    "Пользователь {Username} из ADMIN_USERNAMES не найден — права не выданы. " +
+                    "Зарегистрируйте его и перезапустите приложение",
+                    username);
+                continue;
+            }
+
+            if (user.IsAdmin)
+                continue;
+
+            user.IsAdmin = true;
+            granted++;
+
+            logger.LogInformation("Пользователю {Username} выданы права администратора", username);
+        }
+
+        if (granted > 0)
+            await dbContext.SaveChangesAsync(cancellationToken);
     }
 
     public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;

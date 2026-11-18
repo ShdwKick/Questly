@@ -13,4 +13,9 @@ public interface IUserService
     Task<string> TryRefreshAccessTokenAsync(string refreshToken);
     Task<bool> Logout(string refreshToken);
     Task<PaginatedResult<User>> GetUsersAsync(int page, int pageSize);
+
+    /// <summary>
+    /// Выдаёт или снимает права администратора у пользователя.
+    /// </summary>
+    Task<User> SetAdminAsync(Guid userId, bool isAdmin);
 }

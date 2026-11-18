@@ -15,4 +15,16 @@ public interface IUserRepository
     /// Возвращает страницу пользователей. Пагинация выполняется на стороне БД.
     /// </summary>
     Task<PaginatedResult<User>> GetUsersAsync(int page, int pageSize);
+
+    /// <summary>
+    /// Действующий ли это администратор: признак выставлен и пользователь не заблокирован.
+    /// Один запрос без выборки самой записи — вызывается на каждой административной ручке.
+    /// </summary>
+    Task<bool> IsActiveAdminAsync(Guid userId);
+
+    /// <summary>
+    /// Выдаёт или снимает права администратора и возвращает обновлённого пользователя.
+    /// </summary>
+    /// <exception cref="KeyNotFoundException">Пользователя с таким идентификатором нет.</exception>
+    Task<User> SetAdminAsync(Guid userId, bool isAdmin);
 }
